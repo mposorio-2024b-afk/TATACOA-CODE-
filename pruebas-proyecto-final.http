@@ -1,0 +1,231 @@
+### ═══════════════════════════════════════════════════════════
+###  PROYECTO FINAL · Tatacoa Code
+###  Usuarios con clave y rol · Reservas · Facturación · Pagos
+###  NestJS + TypeORM + PostgreSQL (Docker) + JWT
+###
+###  Haz clic en "Send Request" encima de cada petición.
+###  PRIMERO ejecuta los 4 logins (sección 1): cada uno guarda su token.
+### ═══════════════════════════════════════════════════════════
+
+@host = http://localhost:3000
+
+
+### ───────── 1. INICIAR SESIÓN (cada rol con su clave) ─────────
+
+### 1.1 Login ADMIN
+# @name loginAdmin
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "correo": "admin@tatacoa.co", "clave": "Admin123*" }
+
+### 1.2 Login RESERVAS
+# @name loginReservas
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "correo": "reservas@tatacoa.co", "clave": "Reservas123*" }
+
+### 1.3 Login FACTURACIÓN
+# @name loginFacturacion
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "correo": "facturacion@tatacoa.co", "clave": "Factura123*" }
+
+### 1.4 Login PAGOS
+# @name loginPagos
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "correo": "pagos@tatacoa.co", "clave": "Pagos123*" }
+
+@tokenAdmin = {{loginAdmin.response.body.access_token}}
+@tokenReservas = {{loginReservas.response.body.access_token}}
+@tokenFacturacion = {{loginFacturacion.response.body.access_token}}
+@tokenPagos = {{loginPagos.response.body.access_token}}
+
+
+### 1.5 Login con clave equivocada (esperado: 401)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "correo": "admin@tatacoa.co", "clave": "noesesta" }
+
+### 1.6 Pedir reservas SIN token (esperado: 401 "Debes iniciar sesión")
+GET {{host}}/reservas
+
+### 1.7 ¿Quién soy? (esperado: 200 con nombre y rol)
+GET {{host}}/auth/perfil
+Authorization: Bearer {{tokenReservas}}
+
+
+### ───────── 2. RESERVAS (rol reservas) ─────────
+
+### 2.1 Cualquier rol puede VER reservas (esperado: 200)
+GET {{host}}/reservas
+Authorization: Bearer {{tokenPagos}}
+
+### 2.2 Rol PAGOS intenta cambiar el estado (esperado: 403)
+PATCH {{host}}/reservas/2
+Authorization: Bearer {{tokenPagos}}
+Content-Type: application/json
+
+{ "estado": "confirmada" }
+
+### 2.3 Rol RESERVAS confirma la reserva (esperado: 200)
+PATCH {{host}}/reservas/2
+Authorization: Bearer {{tokenReservas}}
+Content-Type: application/json
+
+{ "estado": "confirmada" }
+
+
+### ───────── 3. FACTURACIÓN (rol facturacion) ─────────
+
+### 3.1 Rol RESERVAS intenta facturar (esperado: 403)
+POST {{host}}/facturas
+Authorization: Bearer {{tokenReservas}}
+Content-Type: application/json
+
+{ "reservaId": 2 }
+
+### 3.2 Rol FACTURACIÓN emite la factura (esperado: 201, FAC-0000X)
+POST {{host}}/facturas
+Authorization: Bearer {{tokenFacturacion}}
+Content-Type: application/json
+
+{ "reservaId": 2 }
+
+### 3.3 Facturar la misma reserva otra vez (esperado: 409)
+POST {{host}}/facturas
+Authorization: Bearer {{tokenFacturacion}}
+Content-Type: application/json
+
+{ "reservaId": 2 }
+
+### 3.4 Ver facturas con sus relaciones (reserva, emitidaPor, pagos)
+GET {{host}}/facturas
+Authorization: Bearer {{tokenFacturacion}}
+
+
+### ───────── 4. PAGOS (rol pagos) ─────────
+### Cambia facturaId por el id que te devolvió la prueba 3.2
+
+### 4.1 Rol FACTURACIÓN intenta registrar un pago (esperado: 403)
+POST {{host}}/pagos
+Authorization: Bearer {{tokenFacturacion}}
+Content-Type: application/json
+
+{ "facturaId": 1, "monto": 50000, "metodo": "nequi" }
+
+### 4.2 Rol PAGOS registra un abono (esperado: 201 con saldoPendiente)
+POST {{host}}/pagos
+Authorization: Bearer {{tokenPagos}}
+Content-Type: application/json
+
+{ "facturaId": 1, "monto": 50000, "metodo": "nequi", "referencia": "NQ-48213" }
+
+### 4.3 Pago mayor al saldo (esperado: 400)
+POST {{host}}/pagos
+Authorization: Bearer {{tokenPagos}}
+Content-Type: application/json
+
+{ "facturaId": 1, "monto": 99999999, "metodo": "efectivo" }
+
+### 4.4 Ver una factura con TODOS sus pagos y quién los registró
+GET {{host}}/facturas/1
+Authorization: Bearer {{tokenPagos}}
+
+### 4.5 Rol PAGOS intenta borrar un pago (esperado: 403, solo admin)
+DELETE {{host}}/pagos/1
+Authorization: Bearer {{tokenPagos}}
+
+
+### ───────── 5. USUARIOS (solo admin) ─────────
+
+### 5.1 Rol RESERVAS intenta ver usuarios (esperado: 403)
+GET {{host}}/users
+Authorization: Bearer {{tokenReservas}}
+
+### 5.2 ADMIN ve los usuarios (esperado: 200, SIN el campo clave)
+GET {{host}}/users
+Authorization: Bearer {{tokenAdmin}}
+
+### 5.3 ADMIN crea un usuario nuevo (esperado: 201)
+POST {{host}}/users
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "nombre": "Maria Paula",
+  "correo": "mposorio-2024b@corhuila.edu.co",
+  "clave": "Paula123*",
+  "rol": "reservas"
+}
+
+### 5.4 El usuario nuevo inicia sesión con su clave (esperado: 200)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "correo": "mposorio-2024b@corhuila.edu.co", "clave": "Paula123*" }
+
+### 5.5 Rol inventado y clave corta (esperado: 400)
+POST {{host}}/users
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{ "nombre": "X", "correo": "x@tatacoa.co", "clave": "123", "rol": "jefe" }
+
+
+### ───────── 6. VISITANTES (rol cliente) ─────────
+
+### 6.1 Un visitante se registra solo (esperado: 201 con su token)
+# @name registroCliente
+POST {{host}}/auth/registro
+Content-Type: application/json
+
+{
+  "nombre": "Juan Olaya",
+  "correo": "juan.olaya@correo.com",
+  "clave": "Juan123*"
+}
+
+@tokenCliente = {{registroCliente.response.body.access_token}}
+
+### 6.2 Intentar registrarse como admin (esperado: 400 "property rol should not exist")
+POST {{host}}/auth/registro
+Content-Type: application/json
+
+{ "nombre": "Pirata", "correo": "pirata@correo.com", "clave": "123456", "rol": "admin" }
+
+### 6.3 El cliente solicita una reserva (esperado: 201, queda pendiente y enlazada a su usuario)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "visitante": "Juan Olaya", "tour": "Astronómico", "fecha": "2026-12-10", "personas": 3 }
+
+### 6.4 El cliente ve SOLO sus reservas (esperado: 200)
+GET {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+
+### 6.5 El cliente intenta confirmar su reserva (esperado: 403, eso lo hace el rol reservas)
+### Cambia el 3 por el id que devolvió la prueba 6.3
+PATCH {{host}}/reservas/3
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "estado": "confirmada" }
+
+### 6.6 El cliente intenta ver una reserva ajena (esperado: 404)
+GET {{host}}/reservas/1
+Authorization: Bearer {{tokenCliente}}
+
+### 6.7 El cliente ve SUS facturas (esperado: 200, vacío hasta que facturación la emita)
+GET {{host}}/facturas/mias
+Authorization: Bearer {{tokenCliente}}
+
+### 6.8 El cliente cancela su reserva pendiente (esperado: 200, estado cancelada)
+PATCH {{host}}/reservas/3/cancelar
+Authorization: Bearer {{tokenCliente}}

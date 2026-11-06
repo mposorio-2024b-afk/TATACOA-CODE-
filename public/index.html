@@ -1,0 +1,1724 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tatacoa Code · Reservas</title>
+<style>
+  :root{--noche:#14122b;--panel:#1f1c3d;--borde:#3a3566;--texto:#f3ecdf;--suave:#c3bcda;--ocre:#f0a04b;--rojo:#c4552f;
+        --get:#2f9e6b;--post:#3b7dd8;--put:#e08a2c;--patch:#9b5de5;--delete:#d64545;--options:#0f9aa8;--head:#6c7a89}
+  *{box-sizing:border-box}
+  html{background:#0d0b24}
+  main > section,.fila > div,.barra > div{min-width:0}
+  input,select{min-width:0}
+  @media(max-width:600px){.fila{grid-template-columns:1fr}}
+  body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:linear-gradient(180deg,#0d0b24 0%,#1d1a45 55%,#3a1f3a 100%);background-attachment:fixed;color:var(--texto);min-height:100vh;overflow-x:hidden}
+
+  #cielo{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .estrella{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;animation:titilar 3s infinite ease-in-out}
+  @keyframes titilar{0%,100%{opacity:.2}50%{opacity:1}}
+
+  /* Bienvenida */
+  #bienvenida{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#0d0b24,#2a1f55 60%,#5a2a3a);text-align:center;padding:16px;transition:opacity .7s,visibility .7s}
+  #bienvenida.oculta{opacity:0;visibility:hidden}
+  #bienvenida h1{font-size:clamp(1.6rem,5vw,2.8rem);margin:10px 0 4px;color:#ffe9a8;text-shadow:0 3px 0 #c4552f}
+  #bienvenida p{color:var(--suave);margin:0 0 18px;font-size:1.05rem}
+  #bienvenida svg{width:min(760px,100%);height:auto;filter:drop-shadow(0 10px 25px rgba(0,0,0,.5))}
+  .btn-entrar{font-size:1.2rem;padding:14px 30px;border-radius:999px;background:linear-gradient(180deg,#ffb347,#e0602c);box-shadow:0 6px 0 #9c3a18;animation:latir 1.6s infinite}
+  @keyframes latir{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+  .saludo{transform-origin:100px 85px;animation:saludar 1.2s infinite ease-in-out}
+  @keyframes saludar{0%,100%{transform:rotate(0)}50%{transform:rotate(-18deg)}}
+  .rebotar{animation:rebote .6s}
+  @keyframes rebote{0%{transform:translateY(0)}30%{transform:translateY(-18px)}60%{transform:translateY(0)}80%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+  .flotar{animation:flotar 4s infinite ease-in-out}
+  @keyframes flotar{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  header{position:relative;z-index:1;text-align:center;padding:8px 16px 0}
+  header svg{width:100%;max-width:1100px;height:auto;display:block;margin:0 auto}
+  header h1{margin:-6px 0 4px;font-size:clamp(1.3rem,3.5vw,2rem);color:#ffe9a8;text-shadow:0 3px 0 #c4552f}
+  header p{margin:0 0 6px;color:var(--suave)}
+
+  main{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:16px 16px 170px;display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media(max-width:800px){main{grid-template-columns:1fr}}
+  .card{background:rgba(31,28,61,.92);border:2px solid var(--borde);border-radius:18px;padding:16px;box-shadow:0 8px 0 rgba(0,0,0,.25)}
+  .full{grid-column:1/-1}
+  h2{margin:0 0 12px;font-size:1.15rem;color:var(--ocre)}
+  h3{margin:14px 0 6px;font-size:.8rem;color:var(--suave);text-transform:uppercase;letter-spacing:.06em}
+  label{display:block;font-size:.85rem;color:var(--suave);margin:8px 0 4px}
+  input,select{width:100%;padding:9px;border-radius:10px;border:2px solid var(--borde);background:#15132e;color:var(--texto);font-size:.95rem}
+  input:focus,select:focus{outline:none;border-color:var(--ocre)}
+  .fila{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .botones{display:flex;flex-wrap:wrap;gap:8px}
+  button{border:0;border-radius:12px;padding:10px 13px;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.35);transition:transform .1s,opacity .3s,filter .3s}
+  button:hover{filter:brightness(1.15);transform:translateY(-2px)}
+  button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+  .GET{background:var(--get)}.POST{background:var(--post)}.PUT{background:var(--put)}.PATCH{background:var(--patch)}
+  .DELETE{background:var(--delete)}.OPTIONS{background:var(--options)}.HEAD{background:var(--head)}
+  .ayuda{font-size:.82rem;color:var(--suave);margin-top:12px;line-height:1.55;background:#15132e;border-radius:10px;padding:10px}
+  pre{background:#0e0c22;border-radius:10px;padding:12px;overflow:auto;max-height:300px;margin:0;font-size:.85rem;white-space:pre-wrap}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{padding:9px;border-bottom:1px solid var(--borde);text-align:left}
+  th{color:var(--suave);font-weight:600}
+  tbody tr{cursor:pointer;transition:background .15s}
+  tbody tr:hover{background:#2e2a5a}
+  .estado{padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:800}
+  .pendiente{background:#8a6f12}.confirmada{background:#1e7a4e}.cancelada{background:#8a2424}
+  #log{list-style:none;padding:0;margin:0;max-height:220px;overflow:auto;font-family:Consolas,monospace;font-size:.85rem}
+  #log li{padding:6px 0;border-bottom:1px dashed var(--borde)}
+  .tag{display:inline-block;min-width:72px;text-align:center;border-radius:6px;padding:2px 4px;margin-right:6px;color:#fff;font-size:.75rem}
+
+  /* ═══ EFECTOS DE CADA BOTÓN ═══ */
+  /* GET todas: filas entran en cascada */
+  .entrar{animation:entrar .5s both}
+  @keyframes entrar{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
+  /* GET por ID: fila brilla */
+  .brillo{animation:brillo .8s 3}
+  @keyframes brillo{0%,100%{background:transparent}50%{background:rgba(255,209,102,.45)}}
+  /* POST: fila nueva verde */
+  .nuevo{animation:nuevo 1.8s}
+  @keyframes nuevo{0%{background:rgba(47,158,107,.9);transform:scale(1.04)}100%{background:transparent;transform:none}}
+  /* PUT: fila se voltea */
+  .voltear{animation:voltear 1s}
+  @keyframes voltear{0%{transform:rotateX(0)}50%{transform:rotateX(90deg);background:rgba(224,138,44,.7)}100%{transform:rotateX(0);background:transparent}}
+  /* PATCH: solo celdas cambiadas parpadean */
+  td.cambio{animation:cambio .7s 4}
+  @keyframes cambio{0%,100%{background:transparent;box-shadow:none}50%{background:rgba(155,93,229,.75);box-shadow:inset 0 0 0 2px #e2c8ff}}
+  /* DELETE: fila tiembla y sale volando */
+  .borrar{animation:borrar .9s forwards}
+  @keyframes borrar{0%{transform:none}10%,30%,50%{transform:translateX(-10px);background:rgba(214,69,69,.6)}20%,40%{transform:translateX(10px)}100%{transform:translateX(130%);opacity:0;background:rgba(214,69,69,.6)}}
+  /* OPTIONS: botones permitidos y bloqueados */
+  button.permitido{box-shadow:0 0 0 3px #7cffb2,0 0 22px #7cffb2;transform:translateY(-3px)}
+  button.bloqueado{opacity:.25;filter:grayscale(1)}
+  button.bloqueado::after{content:" 🚫"}
+  /* Error: temblor */
+  .temblor{animation:temblor .5s}
+  @keyframes temblor{0%,100%{transform:none}20%,60%{transform:translateX(-12px)}40%,80%{transform:translateX(12px)}}
+  /* Destello de pantalla */
+  #flash{position:fixed;inset:0;pointer-events:none;z-index:40;opacity:0}
+  #flash.activo{animation:flash .7s}
+  @keyframes flash{0%{opacity:.35}100%{opacity:0}}
+  /* HEAD: insignia gigante */
+  #insignia{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%) scale(0);z-index:45;background:#fff8e6;color:#3a2a1a;border:4px solid #3a2a1a;
+    border-radius:26px;padding:18px 28px;text-align:center;font-weight:800;box-shadow:0 10px 0 rgba(0,0,0,.3);pointer-events:none;min-width:240px}
+  #insignia.pop{animation:pop 3s}
+  @keyframes pop{0%{transform:translate(-50%,-50%) scale(0)}10%{transform:translate(-50%,-50%) scale(1.15)}18%,82%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-50%,-50%) scale(0)}}
+  #insignia .icono{font-size:2.6rem;display:block}
+  #insignia .valor{font-size:2.4rem;display:block;color:#c4552f}
+  #insignia small{display:block;font-weight:600;color:#7a5a3a}
+  /* GET por ID: tiquete */
+  #modal{position:fixed;inset:0;background:rgba(5,4,20,.7);z-index:46;display:none;align-items:center;justify-content:center;padding:16px}
+  #modal.abierto{display:flex}
+  .ticket{display:flex;max-width:540px;width:100%;background:#fff3d6;color:#3a2a1a;border-radius:18px;overflow:hidden;box-shadow:0 12px 0 rgba(0,0,0,.35);animation:caer .55s}
+  @keyframes caer{from{transform:translateY(-80px) rotate(-5deg);opacity:0}to{transform:none;opacity:1}}
+  .ticket .cuerpo{flex:1;padding:18px}
+  .ticket .talon{width:120px;background:#c4552f;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;border-left:5px dashed #fff3d6;font-weight:800;text-align:center;padding:10px}
+  .ticket .talon .num{font-size:2.2rem}
+  .ticket h4{margin:0 0 10px;font-size:1.25rem}
+  .ticket p{margin:5px 0}
+  .ticket button{margin-top:12px;background:#3a2a1a}
+  /* POST: chispas */
+  .chispa{position:fixed;z-index:44;pointer-events:none;font-size:22px;animation:chispa 1.1s forwards}
+  @keyframes chispa{to{transform:translate(var(--dx),var(--dy)) rotate(360deg) scale(.4);opacity:0}}
+
+  /* Tabla dinámica */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .chip{padding:8px 12px;border-radius:999px;font-size:.85rem}
+  .chip b{background:rgba(0,0,0,.3);border-radius:99px;padding:1px 8px;margin-left:4px}
+  .chip.activo{box-shadow:0 0 0 3px #ffe9a8,0 4px 0 rgba(0,0,0,.35)}
+  .barra{display:grid;grid-template-columns:220px 1fr;gap:10px}
+  @media(max-width:600px){.barra{grid-template-columns:1fr}}
+  th.ordenable{cursor:pointer;user-select:none}
+  th.ordenable:hover{color:var(--ocre)}
+  td.acciones{white-space:nowrap}
+  td.acciones button{padding:6px 9px;margin-right:4px;background:#3a3566;font-size:1rem}
+
+  /* ═══ Login ═══ */
+  #login{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;padding:16px;
+    background:linear-gradient(180deg,#0d0b24,#2a1f55 60%,#5a2a3a)}
+  #login.visible{display:flex}
+  .login-card{width:100%;max-width:430px;background:#fff8e6;color:#3a2a1a;border:4px solid #3a2a1a;border-radius:24px;padding:22px;box-shadow:0 10px 0 rgba(0,0,0,.35);animation:caer .5s}
+  .login-card h2{color:#c4552f;margin:0 0 4px;font-size:1.5rem}
+  .login-card p{margin:0 0 10px;color:#7a5a3a}
+  .login-card label{color:#7a5a3a;font-weight:700}
+  .login-card input{background:#fff;color:#3a2a1a;border-color:#d9c3a0}
+  .login-card .entrar-btn{width:100%;margin-top:14px;font-size:1.05rem;background:linear-gradient(180deg,#ffb347,#e0602c)}
+  .login-error{color:#a82a2a;font-weight:700;min-height:1.3em;margin-top:8px}
+  .demo-cuentas{margin-top:14px;border-top:2px dashed #d9c3a0;padding-top:10px}
+  .demo-cuentas small{display:block;color:#7a5a3a;margin-bottom:6px}
+  .demo-cuentas button{padding:6px 10px;font-size:.8rem;margin:3px}
+  /* ═══ Sesión y pestañas ═══ */
+  #barra{position:relative;z-index:2;max-width:1100px;margin:6px auto 0;padding:0 16px;display:none;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+  #barra.visible{display:flex}
+  .quien{display:flex;align-items:center;gap:10px;background:rgba(31,28,61,.92);border:2px solid var(--borde);border-radius:999px;padding:6px 8px 6px 14px}
+  .rol{padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:800;color:#fff;text-transform:uppercase}
+  .rol-cliente{background:#d9822b}
+  .rol-admin{background:#c4552f}.rol-reservas{background:#2f9e6b}.rol-facturacion{background:#3b7dd8}.rol-pagos{background:#9b5de5}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px}
+  .tab-btn{background:#2a2650;border:2px solid var(--borde)}
+  .tab-btn.activa{background:var(--ocre);color:#3a2a1a;border-color:#ffe9a8}
+  .tab-btn[hidden]{display:none}
+  main.tab{display:none}
+  main.tab.activa{display:grid}
+  .candado{font-size:.75rem;opacity:.85}
+  .solo-lectura{font-size:.82rem;background:#3a2a1a;color:#ffe9a8;border-radius:10px;padding:8px 10px;margin-bottom:10px}
+  .barra-progreso{height:8px;background:#15132e;border-radius:99px;overflow:hidden;min-width:80px}
+  .barra-progreso span{display:block;height:100%;background:linear-gradient(90deg,#2f9e6b,#7cffb2)}
+  .pagada{background:#1e7a4e}.anulada{background:#555}
+  .monto{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .vacio{color:var(--suave);font-style:italic}
+  .lista-pendientes li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px;border-bottom:1px dashed var(--borde)}
+  .lista-pendientes{list-style:none;padding:0;margin:0}
+
+  .link-btn{background:none;box-shadow:none;color:#c4552f;padding:4px 0;font-weight:800;text-decoration:underline}
+  .link-btn:hover{transform:none}
+  .cambiar{margin-top:10px;text-align:center;color:#7a5a3a}
+  .estimado{margin-top:12px;background:#15132e;border-radius:12px;padding:12px}
+  .estimado .total{font-size:1.6rem;color:#ffe9a8;font-weight:800}
+  .pasos{margin:0;padding-left:20px;line-height:1.9}
+  .registrado{font-size:.7rem;background:#d9822b;color:#fff;border-radius:99px;padding:1px 7px;margin-left:4px;white-space:nowrap}
+
+  /* ═══ Monitor en vivo ═══ */
+  .monitor-barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+  .en-vivo{display:inline-flex;align-items:center;gap:8px;font-weight:800}
+  .punto{width:12px;height:12px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 0 rgba(255,77,77,.7);animation:pulso 1.4s infinite}
+  .punto.pausa{background:#888;animation:none}
+  @keyframes pulso{0%{box-shadow:0 0 0 0 rgba(255,77,77,.7)}70%{box-shadow:0 0 0 10px rgba(255,77,77,0)}100%{box-shadow:0 0 0 0 rgba(255,77,77,0)}}
+  .mini{font-size:.82rem}
+  .mini th,.mini td{padding:6px}
+  .tabla-vivo{max-height:330px;overflow:auto}
+  .cuenta{font-size:.8rem;background:#15132e;border-radius:99px;padding:2px 9px;margin-left:6px;color:var(--suave)}
+  tr.cambio-vivo{animation:cambioVivo 2.4s}
+  @keyframes cambioVivo{0%,40%{background:rgba(255,209,102,.55)}100%{background:transparent}}
+
+  /* Tato */
+  #guia{position:fixed;right:14px;bottom:10px;z-index:20;display:flex;align-items:flex-end;gap:6px;pointer-events:none}
+  #guia svg{width:110px;height:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+  #burbuja{max-width:240px;background:#fff8e6;color:#3a2a1a;border-radius:16px 16px 4px 16px;padding:10px 12px;font-size:.9rem;font-weight:600;
+    box-shadow:0 6px 0 rgba(0,0,0,.25);margin-bottom:80px;border:3px solid #3a2a1a}
+  #burbuja.error{background:#ffe3e0}
+  @media(max-width:600px){#guia svg{width:80px}#burbuja{max-width:170px;font-size:.8rem;margin-bottom:60px}}
+</style>
+</head>
+<body>
+
+<div id="cielo"></div>
+<div id="flash"></div>
+<div id="insignia"></div>
+<div id="modal" onclick="if(event.target===this)cerrarTicket()"></div>
+
+<!-- ═════════ BIENVENIDA ═════════ -->
+<div id="bienvenida">
+  <svg viewBox="0 0 800 340" role="img" aria-label="Caricatura del desierto de la Tatacoa de noche con un cactus saludando y un telescopio">
+    <defs>
+      <linearGradient id="gCielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1747"/><stop offset="1" stop-color="#4a2a5a"/></linearGradient>
+      <linearGradient id="gRoca" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2683a"/><stop offset="1" stop-color="#a8401f"/></linearGradient>
+    </defs>
+    <rect x="0" y="0" width="800" height="340" rx="28" fill="url(#gCielo)"/>
+    <g fill="#fff">
+      <circle cx="60" cy="40" r="2"/><circle cx="140" cy="80" r="1.5"/><circle cx="230" cy="30" r="2.5"/>
+      <circle cx="320" cy="70" r="1.5"/><circle cx="420" cy="25" r="2"/><circle cx="500" cy="60" r="1.5"/>
+      <circle cx="720" cy="40" r="2"/><circle cx="760" cy="110" r="1.5"/><circle cx="380" cy="120" r="1.5"/>
+    </g>
+    <path d="M250 50 L330 95" stroke="#ffe9a8" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+    <circle cx="332" cy="96" r="4" fill="#fff"/>
+    <g class="flotar">
+      <circle cx="640" cy="85" r="48" fill="#ffe9a8"/>
+      <circle cx="620" cy="70" r="7" fill="#f2d27a"/><circle cx="662" cy="104" r="9" fill="#f2d27a"/>
+      <circle cx="628" cy="88" r="4" fill="#3a2a1a"/><circle cx="652" cy="88" r="4" fill="#3a2a1a"/>
+      <path d="M628 102 Q640 112 652 102" stroke="#3a2a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="618" cy="98" r="5" fill="#f5a3a3" opacity=".6"/><circle cx="662" cy="98" r="5" fill="#f5a3a3" opacity=".6"/>
+    </g>
+    <path d="M0 250 L40 205 L70 222 L110 160 L150 210 L190 180 L240 225 L290 165 L330 205 L380 150 L430 212 L480 178 L540 228 L590 170 L640 215 L700 175 L760 220 L800 195 L800 340 L0 340Z" fill="url(#gRoca)"/>
+    <g stroke="#8f3518" stroke-width="3" fill="none" opacity=".7">
+      <path d="M110 170 L118 240"/><path d="M290 175 L282 245"/><path d="M380 160 L392 240"/><path d="M590 180 L582 240"/><path d="M700 185 L708 240"/>
+    </g>
+    <path d="M0 285 Q200 262 400 282 T800 278 L800 340 L0 340Z" fill="#f0a04b"/>
+    <path d="M0 312 Q220 296 420 312 T800 306 L800 340 L0 340Z" fill="#c97a2f"/>
+    <g fill="#2f8a3e" stroke="#1f5e2a" stroke-width="3">
+      <rect x="470" y="252" width="14" height="40" rx="7"/><rect x="462" y="262" width="10" height="16" rx="5"/>
+      <rect x="740" y="258" width="12" height="34" rx="6"/>
+    </g>
+    <g transform="translate(560 200)">
+      <g stroke="#3a2a1a" stroke-width="5" stroke-linecap="round">
+        <line x1="40" y1="40" x2="15" y2="95"/><line x1="40" y1="40" x2="65" y2="95"/><line x1="40" y1="40" x2="40" y2="98"/>
+      </g>
+      <g transform="rotate(-28 40 40)">
+        <rect x="0" y="28" width="95" height="24" rx="12" fill="#5b7bd5" stroke="#1d2b5a" stroke-width="4"/>
+        <rect x="88" y="23" width="18" height="34" rx="6" fill="#3a5ab0" stroke="#1d2b5a" stroke-width="4"/>
+        <rect x="-8" y="33" width="14" height="14" rx="4" fill="#3a5ab0" stroke="#1d2b5a" stroke-width="3"/>
+      </g>
+      <circle cx="40" cy="40" r="7" fill="#ffd166" stroke="#3a2a1a" stroke-width="3"/>
+    </g>
+    <g transform="translate(150 125)">
+      <g fill="#3fa34d" stroke="#1f5e2a" stroke-width="5" stroke-linejoin="round">
+        <rect x="2" y="70" width="26" height="55" rx="13"/><rect x="2" y="105" width="45" height="20" rx="10"/>
+        <g class="saludo"><rect x="98" y="25" width="26" height="70" rx="13"/><rect x="78" y="75" width="46" height="20" rx="10"/></g>
+        <rect x="35" y="35" width="65" height="175" rx="32"/>
+      </g>
+      <g stroke="#1f5e2a" stroke-width="3" stroke-linecap="round">
+        <line x1="45" y1="140" x2="52" y2="140"/><line x1="82" y1="150" x2="89" y2="150"/><line x1="50" y1="175" x2="57" y2="175"/><line x1="78" y1="185" x2="85" y2="185"/>
+      </g>
+      <g transform="translate(67 35)">
+        <circle cx="-10" cy="-4" r="9" fill="#ff6fa5"/><circle cx="10" cy="-4" r="9" fill="#ff6fa5"/>
+        <circle cx="0" cy="-14" r="9" fill="#ff6fa5"/><circle cx="0" cy="0" r="7" fill="#ffd166"/>
+      </g>
+      <circle cx="55" cy="80" r="10" fill="#fff"/><circle cx="80" cy="80" r="10" fill="#fff"/>
+      <circle cx="57" cy="82" r="5" fill="#222"/><circle cx="82" cy="82" r="5" fill="#222"/>
+      <circle cx="59" cy="80" r="1.8" fill="#fff"/><circle cx="84" cy="80" r="1.8" fill="#fff"/>
+      <circle cx="46" cy="98" r="6" fill="#ff8fb0" opacity=".7"/><circle cx="90" cy="98" r="6" fill="#ff8fb0" opacity=".7"/>
+      <path d="M55 100 Q67 116 80 100" stroke="#222" stroke-width="5" fill="#a8323a" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(300 225)">
+      <rect x="28" y="30" width="8" height="45" fill="#7a4a24"/>
+      <rect x="0" y="0" width="120" height="38" rx="8" fill="#fff3d6" stroke="#7a4a24" stroke-width="4"/>
+      <text x="60" y="25" text-anchor="middle" font-size="16" font-weight="800" fill="#7a4a24" font-family="Segoe UI, sans-serif">TATACOA</text>
+    </g>
+  </svg>
+  <h1>¡Bienvenidos al Observatorio de la Tatacoa!</h1>
+  <p>Soy <b>Tato</b> 🌵 y te voy a guiar en el taller de los 7 decoradores de NestJS</p>
+  <button class="btn-entrar" onclick="entrar()">🔭 Entrar al observatorio</button>
+</div>
+
+<!-- ═════════ INICIO DE SESIÓN ═════════ -->
+<div id="login">
+  <form class="login-card" id="form-login" onsubmit="iniciarSesion(event)">
+    <h2>🔐 Iniciar sesión</h2>
+    <p>Visitantes y equipo del observatorio entran con su propia clave.</p>
+    <label for="l-correo">Correo</label>
+    <input id="l-correo" type="email" autocomplete="username" placeholder="ej: reservas@tatacoa.co" required>
+    <label for="l-clave">Clave</label>
+    <input id="l-clave" type="password" autocomplete="current-password" placeholder="Tu clave" required>
+    <button class="entrar-btn" type="submit">🔭 Ingresar</button>
+    <div class="login-error" id="l-error"></div>
+    <div class="demo-cuentas">
+      <small>Cuentas de prueba (clic para llenar):</small>
+      <button type="button" class="rol-admin" onclick="llenarDemo('admin@tatacoa.co','Admin123*')">Admin</button>
+      <button type="button" class="rol-reservas" onclick="llenarDemo('reservas@tatacoa.co','Reservas123*')">Reservas</button>
+      <button type="button" class="rol-facturacion" onclick="llenarDemo('facturacion@tatacoa.co','Factura123*')">Facturación</button>
+      <button type="button" class="rol-pagos" onclick="llenarDemo('pagos@tatacoa.co','Pagos123*')">Pagos</button>
+    </div>
+    <div class="cambiar">¿Vienes a visitarnos y no tienes cuenta? <button type="button" class="link-btn" onclick="mostrarRegistro(true)">Regístrate aquí</button></div>
+  </form>
+
+  <form class="login-card" id="form-registro" onsubmit="registrarse(event)" hidden>
+    <h2>🌵 Crear cuenta de visitante</h2>
+    <p>Regístrate para solicitar tus reservas en el observatorio.</p>
+    <label for="r-nombre">Nombre completo</label>
+    <input id="r-nombre" autocomplete="name" placeholder="Ej: Maria Paula Osorio" required>
+    <label for="r-correo">Correo</label>
+    <input id="r-correo" type="email" autocomplete="email" placeholder="tu@correo.com" required>
+    <div class="fila">
+      <div>
+        <label for="r-clave">Clave (mínimo 6)</label>
+        <input id="r-clave" type="password" autocomplete="new-password" required>
+      </div>
+      <div>
+        <label for="r-clave2">Repite la clave</label>
+        <input id="r-clave2" type="password" autocomplete="new-password" required>
+      </div>
+    </div>
+    <button class="entrar-btn" type="submit">✨ Crear mi cuenta</button>
+    <div class="login-error" id="r-error"></div>
+    <div class="cambiar">¿Ya tienes cuenta? <button type="button" class="link-btn" onclick="mostrarRegistro(false)">Inicia sesión</button></div>
+  </form>
+</div>
+
+<!-- ═════════ ENCABEZADO ═════════ -->
+<header>
+  <svg viewBox="0 0 1100 150" aria-hidden="true">
+    <circle cx="960" cy="45" r="28" fill="#ffe9a8"/>
+    <circle cx="950" cy="38" r="5" fill="#f2d27a"/><circle cx="972" cy="55" r="6" fill="#f2d27a"/>
+    <g fill="#fff"><circle cx="120" cy="30" r="2"/><circle cx="300" cy="18" r="1.5"/><circle cx="520" cy="35" r="2"/><circle cx="700" cy="20" r="1.5"/><circle cx="860" cy="70" r="1.5"/></g>
+    <path d="M0 130 L60 95 L100 112 L150 70 L200 108 L260 82 L320 115 L380 75 L440 110 L500 68 L560 112 L620 85 L690 118 L750 78 L810 110 L880 88 L940 120 L1010 92 L1100 115 L1100 150 L0 150Z" fill="#c4552f"/>
+    <path d="M0 140 Q275 125 550 140 T1100 138 L1100 150 L0 150Z" fill="#f0a04b"/>
+    <g fill="#3fa34d" stroke="#1f5e2a" stroke-width="3">
+      <rect x="80" y="100" width="14" height="40" rx="7"/><rect x="70" y="110" width="10" height="16" rx="5"/>
+      <rect x="1030" y="104" width="12" height="36" rx="6"/><rect x="1040" y="112" width="10" height="14" rx="5"/>
+    </g>
+  </svg>
+  <h1>🌵 Tatacoa Code · Reservas del Observatorio</h1>
+  <p>Reservas · Facturación · Pagos — NestJS + TypeORM + PostgreSQL con acceso por roles</p>
+</header>
+
+<div id="barra">
+  <div class="quien">
+    <span>👤 <b id="s-nombre"></b></span>
+    <span class="rol" id="s-rol"></span>
+    <button style="background:#4a4570;padding:6px 10px" onclick="cerrarSesion()">🚪 Salir</button>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn" data-tab="cliente" data-solo="cliente" onclick="verTab('cliente')">🌵 Mis reservas</button>
+    <button class="tab-btn activa" data-tab="reservas" data-empleado="1" onclick="verTab('reservas')">🔭 Reservas</button>
+    <button class="tab-btn" data-tab="facturacion" data-roles="facturacion,pagos" onclick="verTab('facturacion')">🧾 Facturación</button>
+    <button class="tab-btn" data-tab="pagos" data-roles="pagos,facturacion" onclick="verTab('pagos')">💳 Pagos</button>
+    <button class="tab-btn" data-tab="usuarios" data-roles="" onclick="verTab('usuarios')">👥 Usuarios</button>
+    <button class="tab-btn" data-tab="monitor" data-roles="" onclick="verTab('monitor')">📡 En vivo</button>
+  </nav>
+</div>
+
+<main class="tab activa" id="tab-reservas">
+  <section class="card" id="tarjeta-form">
+    <h2>📝 1. Datos de la reserva</h2>
+    <label for="id">ID (haz clic en una fila de la tabla para llenarlo)</label>
+    <input id="id" type="number" min="1" placeholder="Ej: 1">
+
+    <label for="visitante">Visitante</label>
+    <input id="visitante" placeholder="Ej: Maria Paula">
+
+    <div class="fila">
+      <div>
+        <label for="tour">Tour</label>
+        <select id="tour">
+          <option value="">(vacío)</option>
+          <option>Astronómico</option>
+          <option>Senderismo Cuzco</option>
+          <option>Los Hoyos</option>
+          <option>Fotografía nocturna</option>
+        </select>
+      </div>
+      <div>
+        <label for="personas">Personas</label>
+        <input id="personas" type="number" min="1" placeholder="Ej: 3">
+      </div>
+    </div>
+
+    <div class="fila">
+      <div>
+        <label for="fecha">Fecha</label>
+        <input id="fecha" type="date">
+      </div>
+      <div>
+        <label for="estado">Estado (solo PATCH)</label>
+        <select id="estado">
+          <option value="">(sin cambio)</option>
+          <option>pendiente</option>
+          <option>confirmada</option>
+          <option>cancelada</option>
+        </select>
+      </div>
+    </div>
+
+    <h3>🔍 Consultar (no cambian datos)</h3>
+    <div class="botones">
+      <button class="GET" data-metodo="GET" onclick="listar()">🔍 GET todas</button>
+      <button class="GET" data-metodo="GET" onclick="enviar('GET', 'requerido')">🔎 GET por ID</button>
+      <button class="HEAD" data-metodo="HEAD" onclick="enviar('HEAD', 'opcional')">👀 HEAD</button>
+      <button class="OPTIONS" data-metodo="OPTIONS" onclick="enviar('OPTIONS', 'opcional')">📋 OPTIONS</button>
+    </div>
+
+    <h3>✏️ Modificar (cambian datos) * <span class="candado" data-candado="reservas">🔒 solo rol reservas</span></h3>
+    <div class="botones">
+      <button class="POST" data-metodo="POST" onclick="enviar('POST', 'no')">✨ POST crear</button>
+      <button class="PUT" data-metodo="PUT" onclick="enviar('PUT', 'requerido')">🔄 PUT reemplazar</button>
+      <button class="PATCH" data-metodo="PATCH" onclick="enviar('PATCH', 'requerido')">✏️ PATCH modificar</button>
+      <button class="DELETE" data-metodo="DELETE" onclick="enviar('DELETE', 'requerido')">🗑️ DELETE borrar</button>
+      <button style="background:#4a4570" onclick="limpiar()">🧹 Limpiar</button>
+    </div>
+
+    <div class="ayuda">
+      <b>🎬 Qué hace cada botón en la página:</b><br>
+      🔍 <b>GET todas:</b> las filas entran deslizándose.<br>
+      🔎 <b>GET por ID:</b> la fila brilla y aparece el tiquete de la reserva.<br>
+      ✨ <b>POST:</b> la fila nueva aparece en verde con estrellas.<br>
+      🔄 <b>PUT:</b> la fila completa se voltea (se reemplazó todo).<br>
+      ✏️ <b>PATCH:</b> solo parpadean las celdas que cambiaron.<br>
+      🗑️ <b>DELETE:</b> la fila tiembla y sale volando.<br>
+      👀 <b>HEAD:</b> aparece un letrero gigante con el dato del encabezado.<br>
+      📋 <b>OPTIONS:</b> se iluminan los botones permitidos y se apagan los prohibidos.
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>📡 2. Petición y respuesta</h2>
+    <label>Petición enviada</label>
+    <pre id="peticion">—</pre>
+    <label>Respuesta del servidor</label>
+    <pre id="respuesta">—</pre>
+  </section>
+
+  <section class="card full" id="tarjeta-tabla">
+    <h2>🔭 3. Reservas actuales <small style="color:var(--suave)">(GET /reservas)</small></h2>
+    <div class="chips" id="chips"></div>
+    <div class="barra">
+      <div>
+        <label for="filtro">Filtrar por estado (@Query en el servidor)</label>
+        <select id="filtro" onchange="listar()">
+          <option value="">Todas</option>
+          <option>pendiente</option>
+          <option>confirmada</option>
+          <option>cancelada</option>
+        </select>
+      </div>
+      <div>
+        <label for="buscar">Buscar por visitante o tour</label>
+        <input id="buscar" placeholder="🔎 Escribe para buscar…" oninput="pintarTabla(ultimas)">
+      </div>
+    </div>
+    <div style="overflow:auto;margin-top:10px">
+      <table>
+        <thead><tr>
+          <th class="ordenable" onclick="ordenarPor('id')">ID <span id="o-id"></span></th>
+          <th class="ordenable" onclick="ordenarPor('visitante')">Visitante <span id="o-visitante"></span></th>
+          <th class="ordenable" onclick="ordenarPor('tour')">Tour <span id="o-tour"></span></th>
+          <th class="ordenable" onclick="ordenarPor('fecha')">Fecha <span id="o-fecha"></span></th>
+          <th class="ordenable" onclick="ordenarPor('personas')">Personas <span id="o-personas"></span></th>
+          <th class="ordenable" onclick="ordenarPor('estado')">Estado <span id="o-estado"></span></th>
+          <th>Acciones</th>
+        </tr></thead>
+        <tbody id="tabla"></tbody>
+      </table>
+    </div>
+    <p class="ayuda">💡 Haz clic en los títulos de las columnas para ordenar. En cada fila: 🎟️ ver tiquete · ⬇️ descargar comprobante (usa GET /reservas/:id).</p>
+  </section>
+
+  <section class="card full">
+    <h2>📜 4. Historial de peticiones</h2>
+    <ul id="log"></ul>
+  </section>
+</main>
+
+<!-- ═════════ MIS RESERVAS (rol cliente) ═════════ -->
+<main class="tab" id="tab-cliente">
+  <section class="card">
+    <h2>🌵 Solicitar una reserva</h2>
+    <label for="c-tour">Tour</label>
+    <select id="c-tour" onchange="estimar()">
+      <option value="Astronómico">🔭 Astronómico — $80.000 por persona</option>
+      <option value="Senderismo Cuzco">🥾 Senderismo Cuzco — $50.000 por persona</option>
+      <option value="Los Hoyos">🏜️ Los Hoyos — $45.000 por persona</option>
+      <option value="Fotografía nocturna">📷 Fotografía nocturna — $90.000 por persona</option>
+    </select>
+    <div class="fila">
+      <div>
+        <label for="c-fecha">Fecha</label>
+        <input id="c-fecha" type="date">
+      </div>
+      <div>
+        <label for="c-personas">Personas</label>
+        <input id="c-personas" type="number" min="1" max="20" value="2" oninput="estimar()">
+      </div>
+    </div>
+    <div class="estimado">
+      <small>Valor estimado (incluye IVA 19%)</small>
+      <div class="total" id="c-estimado">$0</div>
+      <small id="c-desglose"></small>
+    </div>
+    <div class="botones" style="margin-top:12px">
+      <button class="POST" onclick="solicitarReserva()">✨ Solicitar reserva</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>🗺️ ¿Cómo funciona?</h2>
+    <ol class="pasos">
+      <li>Solicitas tu reserva: queda <span class="estado pendiente">pendiente</span></li>
+      <li>Nuestro equipo de reservas la revisa y la <span class="estado confirmada">confirma</span></li>
+      <li>Facturación emite tu factura 🧾 y aparece aquí</li>
+      <li>Pagas en taquilla, tarjeta, transferencia o Nequi 💳</li>
+      <li>¡Te esperamos bajo las estrellas del desierto! 🌌</li>
+    </ol>
+    <p class="ayuda">💡 Puedes cancelar una reserva mientras esté pendiente. Descarga tu comprobante 🎟️ y tu factura ⬇️ desde la tabla.</p>
+  </section>
+  <section class="card full">
+    <h2>📋 Mis reservas</h2>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>#</th><th>Tour</th><th>Fecha</th><th>Personas</th><th>Estado</th><th>Factura</th><th>Saldo</th><th>Acciones</th></tr></thead>
+        <tbody id="tabla-mias"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- ═════════ FACTURACIÓN ═════════ -->
+<main class="tab" id="tab-facturacion">
+  <section class="card">
+    <h2>🧾 Reservas confirmadas por facturar</h2>
+    <div class="solo-lectura" data-aviso="facturacion">🔒 Tu rol puede ver las facturas, pero solo <b>facturación</b> puede emitirlas o anularlas.</div>
+    <ul class="lista-pendientes" id="por-facturar"></ul>
+    <p class="ayuda">💡 Solo se facturan reservas <b>confirmadas</b>. Precio por persona: Astronómico $80.000 · Senderismo Cuzco $50.000 · Los Hoyos $45.000 · Fotografía nocturna $90.000. Se suma IVA del 19%.</p>
+  </section>
+  <section class="card">
+    <h2>📊 Resumen</h2>
+    <div class="chips" id="chips-facturas"></div>
+    <p class="ayuda">🔗 <b>Relaciones:</b> cada factura pertenece a <b>una reserva</b> (1 a 1), la emite <b>un usuario</b> (muchos a 1) y puede tener <b>varios pagos</b> (1 a muchos).</p>
+  </section>
+  <section class="card full">
+    <h2>📄 Facturas emitidas <small style="color:var(--suave)">(GET /facturas)</small></h2>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>Número</th><th>Reserva</th><th>Tour</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th><th>Emitida por</th><th>Acciones</th></tr></thead>
+        <tbody id="tabla-facturas"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- ═════════ PAGOS ═════════ -->
+<main class="tab" id="tab-pagos">
+  <section class="card">
+    <h2>💳 Registrar pago</h2>
+    <div class="solo-lectura" data-aviso="pagos">🔒 Tu rol puede ver los pagos, pero solo el rol <b>pagos</b> puede registrarlos.</div>
+    <label for="p-factura">Factura pendiente</label>
+    <select id="p-factura" onchange="alElegirFactura()"></select>
+    <div class="fila">
+      <div>
+        <label for="p-monto">Monto (pesos)</label>
+        <input id="p-monto" type="number" min="1000" step="1000" placeholder="Ej: 100000">
+      </div>
+      <div>
+        <label for="p-metodo">Método</label>
+        <select id="p-metodo">
+          <option>efectivo</option><option>tarjeta</option><option>transferencia</option><option>nequi</option>
+        </select>
+      </div>
+    </div>
+    <label for="p-ref">Referencia (opcional)</label>
+    <input id="p-ref" placeholder="Ej: NQ-48213">
+    <div class="botones" style="margin-top:12px">
+      <button class="POST" onclick="registrarPago()">💰 POST registrar pago</button>
+    </div>
+    <p class="ayuda">💡 Puedes pagar en varios abonos. Cuando el saldo llega a $0 la factura pasa sola a <b>pagada</b>. No se acepta un monto mayor al saldo.</p>
+  </section>
+  <section class="card">
+    <h2>📈 Estado de la factura elegida</h2>
+    <div id="p-detalle" class="vacio">Elige una factura para ver su saldo.</div>
+  </section>
+  <section class="card full">
+    <h2>📜 Pagos registrados <small style="color:var(--suave)">(GET /pagos)</small></h2>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>#</th><th>Factura</th><th>Visitante</th><th>Monto</th><th>Método</th><th>Referencia</th><th>Registrado por</th><th>Fecha</th><th></th></tr></thead>
+        <tbody id="tabla-pagos"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- ═════════ USUARIOS (solo admin) ═════════ -->
+<main class="tab" id="tab-usuarios">
+  <section class="card">
+    <h2>➕ Crear usuario</h2>
+    <label for="u-nombre">Nombre</label>
+    <input id="u-nombre" placeholder="Ej: Maria Paula">
+    <label for="u-correo">Correo</label>
+    <input id="u-correo" type="email" placeholder="Ej: mpaula@tatacoa.co">
+    <div class="fila">
+      <div>
+        <label for="u-clave">Clave (mínimo 6)</label>
+        <input id="u-clave" type="password" placeholder="••••••">
+      </div>
+      <div>
+        <label for="u-rol">Rol</label>
+        <select id="u-rol">
+          <option value="reservas">reservas</option>
+          <option value="facturacion">facturacion</option>
+          <option value="pagos">pagos</option>
+          <option value="admin">admin</option>
+          <option value="cliente">cliente</option>
+        </select>
+      </div>
+    </div>
+    <div class="botones" style="margin-top:12px">
+      <button class="POST" onclick="crearUsuario()">✨ POST crear usuario</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>🛡️ Permisos por rol</h2>
+    <table>
+      <thead><tr><th>Rol</th><th>Puede</th></tr></thead>
+      <tbody>
+        <tr><td><span class="rol rol-admin">admin</span></td><td>Todo, incluido gestionar usuarios y borrar pagos</td></tr>
+        <tr><td><span class="rol rol-reservas">reservas</span></td><td>Crear, modificar, cambiar estado y borrar reservas</td></tr>
+        <tr><td><span class="rol rol-facturacion">facturacion</span></td><td>Emitir y anular facturas · ver pagos</td></tr>
+        <tr><td><span class="rol rol-pagos">pagos</span></td><td>Registrar pagos · ver facturas</td></tr>
+        <tr><td><span class="rol rol-cliente">cliente</span></td><td>Se registra solo · solicita y cancela SUS reservas · ve SUS facturas</td></tr>
+      </tbody>
+    </table>
+    <p class="ayuda">🔑 Las claves se guardan <b>cifradas con bcrypt</b> y nunca se devuelven en las respuestas.</p>
+  </section>
+  <section class="card full">
+    <h2>👥 Usuarios del sistema <small style="color:var(--suave)">(GET /users)</small></h2>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Activo</th><th>Acciones</th></tr></thead>
+        <tbody id="tabla-usuarios"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- ═════════ MONITOR EN VIVO (solo admin) ═════════ -->
+<main class="tab" id="tab-monitor">
+  <section class="card full">
+    <div class="monitor-barra">
+      <h2 style="margin:0"><span class="en-vivo"><span class="punto" id="m-punto"></span> Base de datos en vivo</span></h2>
+      <div class="botones">
+        <label for="m-cada" style="margin:0;align-self:center">Actualizar cada</label>
+        <select id="m-cada" style="width:auto" onchange="iniciarMonitor()">
+          <option value="2000">2 s</option>
+          <option value="3000" selected>3 s</option>
+          <option value="5000">5 s</option>
+          <option value="10000">10 s</option>
+        </select>
+        <button id="m-pausa" style="background:#4a4570" onclick="pausarMonitor()">⏸️ Pausar</button>
+      </div>
+    </div>
+    <p class="ayuda" style="margin-bottom:0">🔄 Las 4 tablas de PostgreSQL se consultan solas. Cuando una fila se crea o cambia (desde el panel, REST Client o directamente en la base de datos) se ilumina en amarillo. Última actualización: <b id="m-hora">—</b></p>
+  </section>
+
+  <section class="card">
+    <h2>👥 usuarios <span class="cuenta" id="m-n-usuarios">0</span></h2>
+    <div class="tabla-vivo"><table class="mini">
+      <thead><tr><th>id</th><th>nombre</th><th>correo</th><th>rol</th><th>activo</th></tr></thead>
+      <tbody id="m-usuarios"></tbody>
+    </table></div>
+  </section>
+  <section class="card">
+    <h2>🔭 reservas <span class="cuenta" id="m-n-reservas">0</span></h2>
+    <div class="tabla-vivo"><table class="mini">
+      <thead><tr><th>id</th><th>visitante</th><th>tour</th><th>pers.</th><th>estado</th><th>clienteId</th></tr></thead>
+      <tbody id="m-reservas"></tbody>
+    </table></div>
+  </section>
+  <section class="card">
+    <h2>🧾 facturas <span class="cuenta" id="m-n-facturas">0</span></h2>
+    <div class="tabla-vivo"><table class="mini">
+      <thead><tr><th>número</th><th>reservaId</th><th>total</th><th>saldo</th><th>estado</th><th>emitidaPorId</th></tr></thead>
+      <tbody id="m-facturas"></tbody>
+    </table></div>
+  </section>
+  <section class="card">
+    <h2>💳 pagos <span class="cuenta" id="m-n-pagos">0</span></h2>
+    <div class="tabla-vivo"><table class="mini">
+      <thead><tr><th>id</th><th>facturaId</th><th>monto</th><th>método</th><th>registradoPorId</th></tr></thead>
+      <tbody id="m-pagos"></tbody>
+    </table></div>
+  </section>
+  <section class="card full">
+    <h2>🔗 Cómo se relacionan</h2>
+    <p class="ayuda" style="margin:0">
+      <b>usuarios.id</b> → <b>reservas.clienteId</b> (un cliente pide muchas reservas) ·
+      <b>reservas.id</b> → <b>facturas.reservaId</b> (cada reserva tiene una factura) ·
+      <b>facturas.id</b> → <b>pagos.facturaId</b> (una factura tiene muchos pagos) ·
+      <b>usuarios.id</b> → <b>facturas.emitidaPorId</b> y <b>pagos.registradoPorId</b> (quién lo hizo)
+    </p>
+  </section>
+</main>
+
+<!-- ═════════ TATO ═════════ -->
+<div id="guia">
+  <div id="burbuja">¡Hola! Elige un botón y mira lo que pasa 🌵</div>
+  <svg id="tato" viewBox="0 0 130 215" aria-hidden="true">
+    <g fill="#3fa34d" stroke="#1f5e2a" stroke-width="5" stroke-linejoin="round">
+      <rect x="2" y="70" width="26" height="55" rx="13"/><rect x="2" y="105" width="45" height="20" rx="10"/>
+      <g class="saludo"><rect x="98" y="25" width="26" height="70" rx="13"/><rect x="78" y="75" width="46" height="20" rx="10"/></g>
+      <rect x="35" y="35" width="65" height="175" rx="32"/>
+    </g>
+    <g stroke="#1f5e2a" stroke-width="3" stroke-linecap="round">
+      <line x1="45" y1="140" x2="52" y2="140"/><line x1="82" y1="150" x2="89" y2="150"/><line x1="50" y1="175" x2="57" y2="175"/>
+    </g>
+    <g transform="translate(67 35)">
+      <circle cx="-10" cy="-4" r="9" fill="#ff6fa5"/><circle cx="10" cy="-4" r="9" fill="#ff6fa5"/>
+      <circle cx="0" cy="-14" r="9" fill="#ff6fa5"/><circle cx="0" cy="0" r="7" fill="#ffd166"/>
+    </g>
+    <circle cx="55" cy="80" r="10" fill="#fff"/><circle cx="80" cy="80" r="10" fill="#fff"/>
+    <circle cx="57" cy="82" r="5" fill="#222"/><circle cx="82" cy="82" r="5" fill="#222"/>
+    <circle cx="46" cy="98" r="6" fill="#ff8fb0" opacity=".7"/><circle cx="90" cy="98" r="6" fill="#ff8fb0" opacity=".7"/>
+    <path id="boca" d="M55 100 Q67 116 80 100" stroke="#222" stroke-width="5" fill="#a8323a" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<script>
+  const API = '/reservas';
+  const ENCABEZADOS = ['allow', 'x-total-reservas', 'x-reserva-estado', 'content-type'];
+  const CAMPOS = ['visitante', 'tour', 'fecha', 'personas', 'estado'];
+  const COLORES = { GET: '#2f9e6b', POST: '#3b7dd8', PUT: '#e08a2c', PATCH: '#9b5de5', DELETE: '#d64545', OPTIONS: '#0f9aa8', HEAD: '#6c7a89' };
+  const $ = (id) => document.getElementById(id);
+  const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+  const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let ultimas = [];
+
+  // ── Estrellas ──
+  (function () {
+    for (let i = 0; i < 70; i++) {
+      const e = document.createElement('div');
+      e.className = 'estrella';
+      e.style.left = Math.random() * 100 + '%';
+      e.style.top = Math.random() * 100 + '%';
+      e.style.animationDelay = Math.random() * 3 + 's';
+      const t = Math.random() < 0.2 ? 4 : 2;
+      e.style.width = e.style.height = t + 'px';
+      $('cielo').appendChild(e);
+    }
+  })();
+
+  function entrar() {
+    $('bienvenida').classList.add('oculta');
+    if (sesion) { mostrarApp(); return; }
+    $('login').classList.add('visible');
+    hablar('Inicia sesión con tu cuenta 🔐', true);
+    setTimeout(() => $('l-correo').focus(), 300);
+  }
+
+  // ── Tato ──
+  const MENSAJES_OK = {
+    GET: '¡Encontré lo que buscabas! 🔭',
+    POST: '¡Reserva creada! Te esperamos bajo las estrellas ✨',
+    PUT: 'Reemplacé la reserva COMPLETA y quedó pendiente 🔄',
+    PATCH: 'Cambié SOLO lo que parpadea ✏️',
+    DELETE: 'Reserva eliminada. ¡Adiós! 🗑️',
+    HEAD: 'Shh… solo te traje el encabezado, sin cuerpo 👀',
+    OPTIONS: 'Brillan los botones permitidos en esta ruta 📋',
+  };
+
+  function hablar(texto, feliz) {
+    const b = $('burbuja');
+    b.textContent = texto;
+    b.classList.toggle('error', !feliz);
+    $('boca').setAttribute('d', feliz ? 'M55 100 Q67 116 80 100' : 'M55 108 Q67 96 80 108');
+    $('boca').setAttribute('fill', feliz ? '#a8323a' : 'none');
+    reiniciarClase($('tato'), 'rebotar');
+  }
+
+  function reaccionar(metodo, codigo, datos) {
+    if (codigo >= 200 && codigo < 300) hablar(`${MENSAJES_OK[metodo]} (código ${codigo})`, true);
+    else if (codigo === 403) hablar(`🔒 ${datos && datos.message ? datos.message : 'Tu rol no tiene permiso'} (403)`, false);
+    else if (codigo === 404) hablar(`¡Uy! ${datos && datos.message ? datos.message : 'No encontré ese registro'} 🌵 (404)`, false);
+    else if (codigo === 409) hablar(`${datos && datos.message ? datos.message : 'Conflicto'} ⚠️ (409)`, false);
+    else if (codigo === 400) hablar(`Algo no está bien${datos && datos.message ? ': ' + datos.message : ''} 🤔 (400)`, false);
+    else hablar(`Respuesta con código ${codigo}. Revisa el panel 📡`, false);
+  }
+
+  // ── Utilidades de efectos ──
+  function reiniciarClase(el, clase) {
+    if (!el) return;
+    el.classList.remove(clase);
+    void el.offsetWidth;
+    el.classList.add(clase);
+  }
+
+  function destello(color) {
+    $('flash').style.background = color;
+    reiniciarClase($('flash'), 'activo');
+  }
+
+  function fila(id) { return $('fila-' + id); }
+
+  function marcarFila(id, clase) {
+    const f = fila(id);
+    if (!f) return null;
+    f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    reiniciarClase(f, clase);
+    return f;
+  }
+
+  function efectoCascada() {
+    document.querySelectorAll('#tabla tr').forEach((f, i) => {
+      f.style.animationDelay = i * 0.09 + 's';
+      reiniciarClase(f, 'entrar');
+    });
+  }
+
+  function chispas(el) {
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const figuras = ['✨', '⭐', '🌟', '💫', '🌵'];
+    for (let i = 0; i < 22; i++) {
+      const s = document.createElement('span');
+      s.className = 'chispa';
+      s.textContent = figuras[i % figuras.length];
+      s.style.left = r.left + Math.random() * r.width + 'px';
+      s.style.top = r.top + r.height / 2 + 'px';
+      s.style.setProperty('--dx', (Math.random() * 240 - 120) + 'px');
+      s.style.setProperty('--dy', (Math.random() * -180 - 20) + 'px');
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 1200);
+    }
+  }
+
+  function resaltarCambios(antes, despues) {
+    const f = fila(despues.id);
+    if (!f) return 0;
+    f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    let cambios = 0;
+    CAMPOS.forEach((c) => {
+      if (!antes || String(antes[c]) !== String(despues[c])) {
+        reiniciarClase(f.querySelector(`[data-campo="${c}"]`), 'cambio');
+        cambios++;
+      }
+    });
+    return cambios;
+  }
+
+  function insignia(icono, valor, texto) {
+    $('insignia').innerHTML = `<span class="icono">${icono}</span><span class="valor">${esc(valor)}</span><small>${esc(texto)}</small>`;
+    reiniciarClase($('insignia'), 'pop');
+  }
+
+  function mostrarPermitidos(allow) {
+    const lista = (allow || '').split(',').map((s) => s.trim().toUpperCase());
+    const botones = document.querySelectorAll('[data-metodo]');
+    botones.forEach((b) => {
+      b.classList.remove('permitido', 'bloqueado');
+      b.classList.add(lista.includes(b.dataset.metodo) ? 'permitido' : 'bloqueado');
+    });
+    setTimeout(() => botones.forEach((b) => b.classList.remove('permitido', 'bloqueado')), 4500);
+  }
+
+  function mostrarTicket(r) {
+    $('modal').innerHTML = `
+      <div class="ticket">
+        <div class="cuerpo">
+          <h4>🎟️ Tiquete del Observatorio</h4>
+          <p><b>Visitante:</b> ${esc(r.visitante)}</p>
+          <p><b>Tour:</b> ${esc(r.tour)}</p>
+          <p><b>Fecha:</b> ${esc(r.fecha)}</p>
+          <p><b>Personas:</b> ${esc(r.personas)}</p>
+          <p><b>Estado:</b> <span class="estado ${esc(r.estado)}" style="color:#fff">${esc(r.estado)}</span></p>
+          <button onclick="descargarComprobante(${Number(r.id)})" style="background:#2f9e6b">⬇️ Descargar comprobante</button>
+          <button onclick="cerrarTicket()">Cerrar</button>
+        </div>
+        <div class="talon"><span>RESERVA</span><span class="num">#${esc(r.id)}</span><span>🌵🔭</span></div>
+      </div>`;
+    $('modal').classList.add('abierto');
+  }
+
+  function cerrarTicket() { $('modal').classList.remove('abierto'); }
+
+  function efectoError() {
+    reiniciarClase($('tarjeta-form'), 'temblor');
+    destello('#d64545');
+  }
+
+  // ── Aplicar el efecto según el verbo ──
+  async function aplicarEfecto(metodo, id, datos, res, antes) {
+    destello(COLORES[metodo]);
+    switch (metodo) {
+      case 'GET':
+        marcarFila(datos.id, 'brillo');
+        mostrarTicket(datos);
+        break;
+      case 'POST':
+        await listar(false);
+        chispas(marcarFila(datos.id, 'nuevo'));
+        break;
+      case 'PUT':
+        await listar(false);
+        marcarFila(datos.id, 'voltear');
+        break;
+      case 'PATCH': {
+        await listar(false);
+        const n = resaltarCambios(antes, datos);
+        if (n === 0) hablar('No cambió nada: enviaste los mismos datos 🤷', true);
+        break;
+      }
+      case 'DELETE': {
+        const f = fila(id);
+        if (f) { f.classList.add('borrar'); await esperar(900); }
+        await listar(false);
+        break;
+      }
+      case 'HEAD': {
+        const total = res.headers.get('x-total-reservas');
+        const estado = res.headers.get('x-reserva-estado');
+        if (total !== null) {
+          const filtro = $('filtro').value;
+          insignia('👀', total, `reservas${filtro ? ' ' + filtro + 's' : ''} · X-Total-Reservas`);
+        } else if (estado !== null) {
+          insignia('👀', estado, `estado de la reserva #${id} · X-Reserva-Estado`);
+          marcarFila(id, 'brillo');
+        }
+        break;
+      }
+      case 'OPTIONS':
+        mostrarPermitidos(res.headers.get('allow'));
+        break;
+    }
+  }
+
+  // ── Peticiones ──
+  function leerFormulario(metodo) {
+    const datos = {};
+    if ($('visitante').value.trim()) datos.visitante = $('visitante').value.trim();
+    if ($('tour').value) datos.tour = $('tour').value;
+    if ($('fecha').value) datos.fecha = $('fecha').value;
+    if ($('personas').value) datos.personas = Number($('personas').value);
+    if (metodo === 'PATCH' && $('estado').value) datos.estado = $('estado').value;
+    return datos;
+  }
+
+  function armarUrl(metodo, modoId) {
+    const id = $('id').value;
+    if (modoId === 'requerido' || (modoId === 'opcional' && id)) return `${API}/${id}`;
+    if (metodo === 'HEAD' && $('filtro').value) return `${API}?estado=${$('filtro').value}`;
+    return API;
+  }
+
+  async function enviar(metodo, modoId) {
+    if (modoId === 'requerido' && !$('id').value) {
+      hablar(`Para ${metodo} necesito un ID. Haz clic en una fila de la tabla ☝️`, false);
+      efectoError();
+      return;
+    }
+    const id = Number($('id').value);
+    const previa = ultimas.find((r) => r.id === id);
+    const antes = previa ? { ...previa } : null;
+    const url = armarUrl(metodo, modoId);
+    const opciones = { method: metodo, headers: { 'Content-Type': 'application/json' } };
+    let cuerpo = null;
+    if (['POST', 'PUT', 'PATCH'].includes(metodo)) {
+      cuerpo = leerFormulario(metodo);
+      opciones.body = JSON.stringify(cuerpo);
+    }
+    $('peticion').textContent = `${metodo} ${url}` + (cuerpo ? '\n\n' + JSON.stringify(cuerpo, null, 2) : '');
+    try {
+      const res = await apiFetch(url, opciones);
+      const texto = await res.text();
+      let datos = null;
+      let cuerpoRes = '(sin cuerpo)';
+      if (texto) {
+        try { datos = JSON.parse(texto); cuerpoRes = JSON.stringify(datos, null, 2); } catch { cuerpoRes = texto; }
+      }
+      const enc = ENCABEZADOS.filter((h) => res.headers.get(h)).map((h) => `${h}: ${res.headers.get(h)}`).join('\n');
+      $('respuesta').textContent = `Código: ${res.status}\n\nEncabezados:\n${enc || '(ninguno relevante)'}\n\nCuerpo:\n${cuerpoRes}`;
+      registrar(metodo, url, res.status);
+      reaccionar(metodo, res.status, datos);
+      if (res.ok) await aplicarEfecto(metodo, id, datos, res, antes);
+      else efectoError();
+    } catch (e) {
+      $('respuesta').textContent = 'No se pudo conectar. ¿Está corriendo npm run start:dev?';
+      hablar('¡No puedo conectarme! ¿Encendiste el servidor? 🔌', false);
+      efectoError();
+    }
+  }
+
+  // ── Tabla dinámica: búsqueda, orden, contadores y acciones ──
+  let orden = { campo: 'id', asc: true };
+
+  function pintarTabla(data) {
+    ultimas = data;
+    actualizarChips();
+    const q = ($('buscar').value || '').toLowerCase().trim();
+    let lista = data.filter((r) => !q || `${r.visitante} ${r.tour}`.toLowerCase().includes(q));
+    lista = [...lista].sort((a, b) => {
+      const x = a[orden.campo], y = b[orden.campo];
+      const c = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'es');
+      return orden.asc ? c : -c;
+    });
+    ['id', 'visitante', 'tour', 'fecha', 'personas', 'estado'].forEach((c) => {
+      $('o-' + c).textContent = orden.campo === c ? (orden.asc ? '▲' : '▼') : '';
+    });
+    $('tabla').innerHTML = lista.length
+      ? lista.map((r) => {
+          const id = Number(r.id);
+          return `<tr id="fila-${id}" onclick="seleccionar(${id})">
+            <td data-campo="id">${esc(r.id)}</td>
+            <td data-campo="visitante">${esc(r.visitante)}${r.cliente ? `<span class="registrado" title="${esc(r.cliente.correo)}">🔑 cliente</span>` : ''}</td>
+            <td data-campo="tour">${esc(r.tour)}</td>
+            <td data-campo="fecha">${esc(r.fecha)}</td>
+            <td data-campo="personas">${esc(r.personas)}</td>
+            <td data-campo="estado"><span class="estado ${esc(r.estado)}">${esc(r.estado)}</span></td>
+            <td class="acciones">
+              <button title="Ver tiquete" onclick="event.stopPropagation(); verTicket(${id})">🎟️</button>
+              <button title="Descargar comprobante" onclick="event.stopPropagation(); descargarComprobante(${id})">⬇️</button>
+            </td>
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="7">${data.length ? '🔎 Ninguna reserva coincide con la búsqueda' : '🌵 No hay reservas… ¡crea una con POST!'}</td></tr>`;
+  }
+
+  function ordenarPor(campo) {
+    orden = { campo, asc: orden.campo === campo ? !orden.asc : true };
+    pintarTabla(ultimas);
+    efectoCascada();
+    hablar(`Ordené por ${campo} ${orden.asc ? 'de menor a mayor ▲' : 'de mayor a menor ▼'}`, true);
+  }
+
+  async function actualizarChips() {
+    try {
+      const todas = await (await apiFetch(API)).json();
+      const n = (e) => todas.filter((r) => r.estado === e).length;
+      const actual = $('filtro').value;
+      const chip = (valor, texto, num, color) =>
+        `<button class="chip ${actual === valor ? 'activo' : ''}" style="background:${color}" onclick="filtrarChip('${valor}')">${texto} <b>${num}</b></button>`;
+      $('chips').innerHTML =
+        chip('', '🌌 Todas', todas.length, '#4a4570') +
+        chip('pendiente', '⏳ Pendientes', n('pendiente'), '#8a6f12') +
+        chip('confirmada', '✅ Confirmadas', n('confirmada'), '#1e7a4e') +
+        chip('cancelada', '❌ Canceladas', n('cancelada'), '#8a2424');
+    } catch (e) { /* servidor apagado */ }
+  }
+
+  function filtrarChip(valor) {
+    $('filtro').value = valor;
+    listar();
+  }
+
+  function verTicket(id) {
+    const r = ultimas.find((x) => x.id === id);
+    if (r) { marcarFila(id, 'brillo'); mostrarTicket(r); }
+  }
+
+  // ── Comprobante descargable (imagen PNG) ──
+  function rectRedondo(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+
+  async function descargarComprobante(id) {
+    // Pide la reserva al servidor con GET /reservas/:id
+    const url = `${API}/${id}`;
+    let r;
+    try {
+      const res = await apiFetch(url);
+      registrar('GET', url + ' (comprobante)', res.status);
+      if (!res.ok) { hablar('No pude generar el comprobante: la reserva no existe 🌵', false); efectoError(); return; }
+      r = await res.json();
+    } catch (e) {
+      hablar('¡No puedo conectarme con el servidor! 🔌', false);
+      return;
+    }
+
+    const c = document.createElement('canvas');
+    c.width = 1000; c.height = 460;
+    const g = c.getContext('2d');
+    const fuente = 'Segoe UI, Arial, sans-serif';
+
+    // Cielo y estrellas
+    const cielo = g.createLinearGradient(0, 0, 0, 460);
+    cielo.addColorStop(0, '#1b1747'); cielo.addColorStop(1, '#4a2a5a');
+    g.fillStyle = cielo; g.fillRect(0, 0, 1000, 460);
+    g.fillStyle = '#fff';
+    for (let i = 0; i < 70; i++) { g.beginPath(); g.arc(Math.random() * 1000, Math.random() * 460, Math.random() * 1.6 + 0.4, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#ffe9a8'; g.beginPath(); g.arc(940, 30, 22, 0, Math.PI * 2); g.fill();
+
+    // Montañas de la Tatacoa
+    g.fillStyle = '#c4552f'; g.beginPath(); g.moveTo(0, 460);
+    [[0, 410], [80, 380], [140, 400], [220, 360], [300, 395], [380, 370], [460, 405], [540, 365], [620, 400], [700, 372], [780, 408], [860, 375], [940, 402], [1000, 385], [1000, 460]]
+      .forEach(([x, y]) => g.lineTo(x, y));
+    g.closePath(); g.fill();
+
+    // Tarjeta y talón
+    rectRedondo(g, 40, 40, 920, 330, 24); g.fillStyle = '#fff3d6'; g.fill();
+    g.save(); rectRedondo(g, 40, 40, 920, 330, 24); g.clip();
+    g.fillStyle = '#c4552f'; g.fillRect(740, 40, 220, 330); g.restore();
+    g.setLineDash([12, 10]); g.strokeStyle = '#fff3d6'; g.lineWidth = 5;
+    g.beginPath(); g.moveTo(740, 50); g.lineTo(740, 360); g.stroke(); g.setLineDash([]);
+
+    // Títulos
+    g.fillStyle = '#3a2a1a'; g.font = `bold 34px ${fuente}`;
+    g.fillText('Comprobante de reserva', 75, 100);
+    g.fillStyle = '#7a5a3a'; g.font = `18px ${fuente}`;
+    g.fillText('Observatorio del Desierto de la Tatacoa · Tatacoa Code', 75, 132);
+
+    // Datos
+    const corto = (t) => { t = String(t ?? ''); return t.length > 28 ? t.slice(0, 27) + '…' : t; };
+    [['Visitante', r.visitante], ['Tour', r.tour], ['Fecha', r.fecha], ['Personas', r.personas], ['Estado', r.estado]]
+      .forEach(([k, v], i) => {
+        g.font = `bold 22px ${fuente}`; g.fillStyle = '#7a5a3a'; g.fillText(k + ':', 75, 188 + i * 38);
+        g.font = `22px ${fuente}`; g.fillStyle = '#3a2a1a'; g.fillText(corto(v), 205, 188 + i * 38);
+      });
+
+    // Sello del estado
+    const colorEstado = { pendiente: '#b08a12', confirmada: '#1e7a4e', cancelada: '#a82a2a' }[r.estado] || '#555';
+    g.save(); g.translate(605, 270); g.rotate(-0.25);
+    g.strokeStyle = colorEstado; g.lineWidth = 5; rectRedondo(g, -100, -34, 200, 68, 12); g.stroke();
+    g.fillStyle = colorEstado; g.font = `bold 28px ${fuente}`; g.textAlign = 'center';
+    g.fillText(String(r.estado).toUpperCase(), 0, 10); g.restore();
+
+    // Talón
+    g.fillStyle = '#fff'; g.textAlign = 'center';
+    g.font = `bold 22px ${fuente}`; g.fillText('RESERVA', 850, 120);
+    g.font = `bold 64px ${fuente}`; g.fillText('#' + r.id, 850, 195);
+    g.font = `16px ${fuente}`; g.fillText('Emitido:', 850, 265);
+    g.fillText(new Date().toLocaleString('es-CO'), 850, 290);
+    g.font = `30px ${fuente}`; g.fillText('🌵🔭', 850, 345);
+    g.textAlign = 'left';
+
+    // Pie
+    g.fillStyle = '#fff'; g.font = `15px ${fuente}`;
+    g.fillText(`Generado con NestJS · GET /reservas/${r.id}`, 50, 445);
+
+    // Descargar
+    const a = document.createElement('a');
+    a.download = `comprobante-reserva-${r.id}.png`;
+    a.href = c.toDataURL('image/png');
+    a.click();
+
+    destello('#2f9e6b');
+    chispas(fila(r.id));
+    hablar(`¡Listo! Descargué el comprobante de la reserva #${r.id} ⬇️`, true);
+  }
+
+  async function listar(mostrar = true) {
+    const filtro = $('filtro').value;
+    const url = filtro ? `${API}?estado=${filtro}` : API;
+    try {
+      const res = await apiFetch(url);
+      const data = await res.json();
+      pintarTabla(data);
+      if (mostrar) {
+        $('peticion').textContent = `GET ${url}`;
+        $('respuesta').textContent = `Código: ${res.status}\n\nCuerpo:\n` + JSON.stringify(data, null, 2);
+        registrar('GET', url, res.status);
+        reaccionar('GET', res.status, data);
+        destello(COLORES.GET);
+        efectoCascada();
+      }
+    } catch (e) {
+      $('tabla').innerHTML = '<tr><td colspan="7">🔌 Servidor apagado o ruta /reservas no encontrada</td></tr>';
+    }
+  }
+
+  function seleccionar(id) {
+    $('id').value = id;
+    marcarFila(id, 'brillo');
+    hablar(`Seleccionaste la reserva #${id}. ¿Qué hacemos con ella? 🤔`, true);
+  }
+
+  function limpiar() {
+    ['id', 'visitante', 'tour', 'personas', 'fecha', 'estado'].forEach((c) => $(c).value = '');
+    hablar('¡Formulario limpio! 🧹', true);
+  }
+
+  function registrar(metodo, url, codigo) {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="tag ${metodo}">${metodo}</span>${esc(url)} → <b>${codigo}</b> <small>(${new Date().toLocaleTimeString()})</small>`;
+    $('log').prepend(li);
+  }
+
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarTicket(); });
+
+  // ═══════════════ SESIÓN Y PERMISOS ═══════════════
+  let sesion = null; // { token, usuario: { id, nombre, correo, rol } }
+
+  function guardarSesion(valor) {
+    sesion = valor;
+    try { valor ? sessionStorage.setItem('tatacoa-sesion', JSON.stringify(valor)) : sessionStorage.removeItem('tatacoa-sesion'); } catch (e) {}
+  }
+  function leerSesion() {
+    try { return JSON.parse(sessionStorage.getItem('tatacoa-sesion')); } catch (e) { return null; }
+  }
+
+  // Igual que fetch, pero agrega el token y detecta si la sesión expiró
+  async function apiFetch(url, opciones = {}) {
+    const headers = { ...(opciones.headers || {}) };
+    if (sesion) headers['Authorization'] = `Bearer ${sesion.token}`;
+    const res = await fetch(url, { ...opciones, headers });
+    if (res.status === 401 && !url.startsWith('/auth/login')) {
+      cerrarSesion('Tu sesión expiró. Vuelve a ingresar 🔐');
+    }
+    return res;
+  }
+
+  async function api(metodo, url, cuerpo) {
+    const opciones = { method: metodo, headers: { 'Content-Type': 'application/json' } };
+    if (cuerpo) opciones.body = JSON.stringify(cuerpo);
+    $('peticion').textContent = `${metodo} ${url}` + (cuerpo ? '\n\n' + JSON.stringify(cuerpo, null, 2) : '');
+    const res = await apiFetch(url, opciones);
+    const texto = await res.text();
+    let datos = null;
+    try { datos = texto ? JSON.parse(texto) : null; } catch (e) { datos = texto; }
+    $('respuesta').textContent = `Código: ${res.status}\n\nCuerpo:\n${JSON.stringify(datos, null, 2)}`;
+    registrar(metodo, url, res.status);
+    return { ok: res.ok, status: res.status, datos };
+  }
+
+  const rol = () => (sesion ? sesion.usuario.rol : '');
+  const puede = (...roles) => rol() === 'admin' || roles.includes(rol());
+
+  function llenarDemo(correo, clave) {
+    $('l-correo').value = correo;
+    $('l-clave').value = clave;
+  }
+
+  async function iniciarSesion(e) {
+    e.preventDefault();
+    $('l-error').textContent = '';
+    try {
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo: $('l-correo').value.trim(), clave: $('l-clave').value }),
+      });
+      const datos = await res.json();
+      if (!res.ok) {
+        $('l-error').textContent = Array.isArray(datos.message) ? datos.message.join(' · ') : datos.message;
+        reiniciarClase(document.querySelector('.login-card'), 'temblor');
+        return;
+      }
+      guardarSesion({ token: datos.access_token, usuario: datos.usuario });
+      $('l-clave').value = '';
+      mostrarApp();
+      hablar(`¡Hola, ${datos.usuario.nombre}! Entraste con el rol ${datos.usuario.rol} 🎉`, true);
+    } catch (err) {
+      $('l-error').textContent = 'No hay conexión con el servidor. ¿Está corriendo npm run start:dev?';
+    }
+  }
+
+  function cerrarSesion(mensaje) {
+    detenerMonitor();
+    guardarSesion(null);
+    $('barra').classList.remove('visible');
+    $('login').classList.add('visible');
+    $('l-error').textContent = typeof mensaje === 'string' ? mensaje : '';
+    hablar(typeof mensaje === 'string' ? mensaje : '¡Hasta pronto! 👋', true);
+  }
+
+  function mostrarApp() {
+    $('login').classList.remove('visible');
+    $('barra').classList.add('visible');
+    $('s-nombre').textContent = sesion.usuario.nombre;
+    $('s-rol').textContent = sesion.usuario.rol;
+    $('s-rol').className = `rol rol-${sesion.usuario.rol}`;
+    // Pestañas visibles según el rol
+    const esCliente = rol() === 'cliente';
+    document.querySelectorAll('.tab-btn[data-roles]').forEach((b) => {
+      const roles = b.dataset.roles ? b.dataset.roles.split(',') : [];
+      b.hidden = esCliente || !puede(...roles);
+    });
+    document.querySelectorAll('.tab-btn[data-empleado]').forEach((b) => { b.hidden = esCliente; });
+    document.querySelectorAll('.tab-btn[data-solo]').forEach((b) => { b.hidden = !esCliente; });
+    if (esCliente) { verTab('cliente'); return; }
+    // Avisos de solo lectura y candados
+    document.querySelectorAll('[data-aviso]').forEach((a) => { a.hidden = puede(a.dataset.aviso); });
+    document.querySelectorAll('[data-candado]').forEach((c) => { c.hidden = puede(c.dataset.candado); });
+    verTab('reservas');
+  }
+
+  function verTab(nombre) {
+    if (nombre === 'monitor') iniciarMonitor(); else detenerMonitor();
+    document.querySelectorAll('main.tab').forEach((m) => m.classList.toggle('activa', m.id === `tab-${nombre}`));
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('activa', b.dataset.tab === nombre));
+    if (nombre === 'reservas') { listar(false).then(efectoCascada); }
+    if (nombre === 'facturacion') cargarFacturacion();
+    if (nombre === 'pagos') cargarPagos();
+    if (nombre === 'usuarios') cargarUsuarios();
+    if (nombre === 'cliente') cargarMias();
+  }
+
+  const pesos = (n) => '$' + Number(n || 0).toLocaleString('es-CO');
+  const fechaCorta = (f) => (f ? new Date(f).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '');
+
+  // ═══════════════ FACTURACIÓN ═══════════════
+  let facturas = [];
+
+  async function cargarFacturacion() {
+    const [rF, rR] = await Promise.all([apiFetch('/facturas'), apiFetch('/reservas?estado=confirmada')]);
+    if (!rF.ok) return;
+    facturas = await rF.json();
+    const confirmadas = rR.ok ? await rR.json() : [];
+    const facturadas = new Set(facturas.map((f) => f.reserva && f.reserva.id));
+    const pendientes = confirmadas.filter((r) => !facturadas.has(r.id));
+
+    $('por-facturar').innerHTML = pendientes.length
+      ? pendientes.map((r) => `<li><span><b>Reserva #${esc(r.id)}</b> · ${esc(r.visitante)} · ${esc(r.tour)} · ${esc(r.personas)} pers.</span>
+          <button class="POST" onclick="emitirFactura(${Number(r.id)})">🧾 Facturar</button></li>`).join('')
+      : '<li class="vacio">No hay reservas confirmadas sin factura. Confirma una en la pestaña Reservas (PATCH estado).</li>';
+
+    const cuenta = (e) => facturas.filter((f) => f.estado === e).length;
+    const totalCobrado = facturas.reduce((s, f) => s + f.pagado, 0);
+    $('chips-facturas').innerHTML = `
+      <span class="chip" style="background:#4a4570">🧾 Emitidas <b>${facturas.length}</b></span>
+      <span class="chip" style="background:#8a6f12">⏳ Pendientes <b>${cuenta('pendiente')}</b></span>
+      <span class="chip pagada">✅ Pagadas <b>${cuenta('pagada')}</b></span>
+      <span class="chip anulada">🚫 Anuladas <b>${cuenta('anulada')}</b></span>
+      <span class="chip" style="background:#2f9e6b">💰 Recaudado <b>${pesos(totalCobrado)}</b></span>`;
+
+    $('tabla-facturas').innerHTML = facturas.length
+      ? facturas.map((f) => {
+          const pct = f.total ? Math.round((f.pagado / f.total) * 100) : 0;
+          return `<tr id="factura-${Number(f.id)}">
+            <td class="monto"><b>${esc(f.numero)}</b></td>
+            <td>#${esc(f.reserva && f.reserva.id)} · ${esc(f.reserva && f.reserva.visitante)}</td>
+            <td>${esc(f.reserva && f.reserva.tour)}</td>
+            <td class="monto">${pesos(f.total)}</td>
+            <td class="monto">${pesos(f.pagado)}<div class="barra-progreso"><span style="width:${pct}%"></span></div></td>
+            <td class="monto">${pesos(f.saldo)}</td>
+            <td><span class="estado ${esc(f.estado)}">${esc(f.estado)}</span></td>
+            <td>${esc(f.emitidaPor && f.emitidaPor.nombre)}</td>
+            <td class="acciones">
+              <button title="Descargar factura" onclick="descargarFactura(${Number(f.id)})">⬇️</button>
+              ${f.estado === 'pendiente' && f.pagado === 0 ? `<button title="Anular" onclick="anularFactura(${Number(f.id)})">🚫</button>` : ''}
+            </td></tr>`;
+        }).join('')
+      : '<tr><td colspan="9" class="vacio">Aún no hay facturas.</td></tr>';
+  }
+
+  async function emitirFactura(reservaId) {
+    const r = await api('POST', '/facturas', { reservaId });
+    reaccionarGenerico('POST', r, `Factura ${r.datos && r.datos.numero} emitida por ${pesos(r.datos && r.datos.total)} 🧾`);
+    if (r.ok) {
+      destello(COLORES.POST);
+      await cargarFacturacion();
+      chispas(reiniciarYDevolver($('factura-' + r.datos.id), 'nuevo'));
+    }
+  }
+
+  async function anularFactura(id) {
+    const r = await api('PATCH', `/facturas/${id}/anular`);
+    reaccionarGenerico('PATCH', r, `Factura ${r.datos && r.datos.numero} anulada 🚫`);
+    if (r.ok) { destello(COLORES.DELETE); await cargarFacturacion(); }
+  }
+
+  function reiniciarYDevolver(el, clase) { if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); reiniciarClase(el, clase); } return el; }
+
+  function reaccionarGenerico(metodo, r, textoOk) {
+    if (r.ok) hablar(textoOk, true);
+    else { reaccionar(metodo, r.status, r.datos); efectoError(); }
+  }
+
+  // Factura descargable en PNG (misma idea del comprobante)
+  async function descargarFactura(id) {
+    const res = await apiFetch(`/facturas/${id}`);
+    if (!res.ok) { hablar('No pude descargar la factura 🌵', false); return; }
+    const f = await res.json();
+    registrar('GET', `/facturas/${id} (descarga)`, res.status);
+    dibujarFactura(f);
+  }
+
+  function dibujarFactura(f) {
+    const c = document.createElement('canvas');
+    c.width = 900; c.height = 640;
+    const g = c.getContext('2d');
+    const fuente = 'Segoe UI, Arial, sans-serif';
+    g.fillStyle = '#fff8e6'; g.fillRect(0, 0, 900, 640);
+    g.fillStyle = '#c4552f'; g.fillRect(0, 0, 900, 110);
+    g.fillStyle = '#fff'; g.font = `bold 34px ${fuente}`; g.fillText('FACTURA DE VENTA', 40, 62);
+    g.font = `18px ${fuente}`; g.fillText('Observatorio del Desierto de la Tatacoa · Tatacoa Code', 40, 92);
+    g.textAlign = 'right'; g.font = `bold 30px ${fuente}`; g.fillText(f.numero, 860, 62);
+    g.font = `16px ${fuente}`; g.fillText(new Date(f.emitidaEn).toLocaleString('es-CO'), 860, 92);
+    g.textAlign = 'left'; g.fillStyle = '#3a2a1a';
+    const linea = (k, v, y) => { g.font = `bold 20px ${fuente}`; g.fillStyle = '#7a5a3a'; g.fillText(k, 40, y); g.font = `20px ${fuente}`; g.fillStyle = '#3a2a1a'; g.fillText(String(v ?? ''), 230, y); };
+    linea('Cliente:', f.reserva.visitante, 160);
+    linea('Reserva:', `#${f.reserva.id} · ${f.reserva.fecha}`, 195);
+    linea('Emitida por:', f.emitidaPor ? f.emitidaPor.nombre : '', 230);
+    g.fillStyle = '#3a2a1a'; g.fillRect(40, 260, 820, 40);
+    g.fillStyle = '#fff'; g.font = `bold 18px ${fuente}`;
+    g.fillText('Descripción', 55, 286); g.fillText('Cant.', 470, 286); g.fillText('V. unitario', 560, 286); g.fillText('Valor', 740, 286);
+    g.fillStyle = '#3a2a1a'; g.font = `18px ${fuente}`;
+    g.fillText(`Tour ${f.reserva.tour}`, 55, 330); g.fillText(String(f.personas), 480, 330);
+    g.fillText(pesos(f.valorUnitario), 560, 330); g.fillText(pesos(f.subtotal), 740, 330);
+    g.strokeStyle = '#d9c3a0'; g.beginPath(); g.moveTo(40, 350); g.lineTo(860, 350); g.stroke();
+    const total = (k, v, y, b) => { g.font = `${b ? 'bold ' : ''}20px ${fuente}`; g.textAlign = 'right'; g.fillText(k, 700, y); g.fillText(v, 860, y); g.textAlign = 'left'; };
+    total('Subtotal', pesos(f.subtotal), 390); total('IVA 19%', pesos(f.iva), 422); total('TOTAL', pesos(f.total), 462, true);
+    total('Pagado', pesos(f.pagado), 500); total('Saldo', pesos(f.saldo), 532, true);
+    const color = { pendiente: '#b08a12', pagada: '#1e7a4e', anulada: '#666' }[f.estado] || '#555';
+    g.save(); g.translate(200, 470); g.rotate(-0.2); g.strokeStyle = color; g.lineWidth = 5;
+    rectRedondo(g, -120, -36, 240, 72, 12); g.stroke(); g.fillStyle = color; g.font = `bold 32px ${fuente}`; g.textAlign = 'center';
+    g.fillText(String(f.estado).toUpperCase(), 0, 12); g.restore();
+    g.fillStyle = '#7a5a3a'; g.font = `14px ${fuente}`;
+    g.fillText(`Pagos: ${f.pagos.length ? f.pagos.map((p) => `${pesos(p.monto)} (${p.metodo})`).join(' · ') : 'ninguno'}`, 40, 590);
+    g.fillText(`Generado con NestJS · GET /facturas/${f.id}`, 40, 615);
+    const a = document.createElement('a');
+    a.download = `factura-${f.numero}.png`;
+    a.href = c.toDataURL('image/png');
+    a.click();
+    hablar(`¡Listo! Descargué la factura ${f.numero} ⬇️`, true);
+  }
+
+  // ═══════════════ PAGOS ═══════════════
+  let facturasPendientes = [];
+
+  async function cargarPagos() {
+    const [rP, rF] = await Promise.all([apiFetch('/pagos'), apiFetch('/facturas?estado=pendiente')]);
+    if (rF.ok) {
+      facturasPendientes = await rF.json();
+      const elegida = $('p-factura').value;
+      $('p-factura').innerHTML = facturasPendientes.length
+        ? '<option value="">— Elige una factura —</option>' + facturasPendientes.map((f) =>
+            `<option value="${Number(f.id)}">${esc(f.numero)} · ${esc(f.reserva.visitante)} · saldo ${pesos(f.saldo)}</option>`).join('')
+        : '<option value="">No hay facturas pendientes</option>';
+      if (facturasPendientes.some((f) => String(f.id) === elegida)) $('p-factura').value = elegida;
+      alElegirFactura();
+    }
+    if (!rP.ok) return;
+    const pagos = await rP.json();
+    $('tabla-pagos').innerHTML = pagos.length
+      ? pagos.map((p) => `<tr id="pago-${Number(p.id)}">
+          <td>${esc(p.id)}</td>
+          <td class="monto"><b>${esc(p.factura && p.factura.numero)}</b></td>
+          <td>${esc(p.factura && p.factura.reserva && p.factura.reserva.visitante)}</td>
+          <td class="monto">${pesos(p.monto)}</td>
+          <td>${esc(p.metodo)}</td>
+          <td>${esc(p.referencia || '—')}</td>
+          <td>${esc(p.registradoPor && p.registradoPor.nombre)}</td>
+          <td>${esc(fechaCorta(p.pagadoEn))}</td>
+          <td class="acciones">${puede() ? `<button title="Borrar (solo admin)" onclick="borrarPago(${Number(p.id)})">🗑️</button>` : ''}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="9" class="vacio">Aún no hay pagos.</td></tr>';
+  }
+
+  function alElegirFactura() {
+    const f = facturasPendientes.find((x) => String(x.id) === $('p-factura').value);
+    if (!f) { $('p-monto').value = ''; $('p-detalle').innerHTML = '<span class="vacio">Elige una factura para ver su saldo.</span>'; return; }
+    const pct = f.total ? Math.round((f.pagado / f.total) * 100) : 0;
+    $('p-monto').value = f.saldo;
+    $('p-detalle').innerHTML = `
+      <p><b>${esc(f.numero)}</b> · ${esc(f.reserva.visitante)} · ${esc(f.reserva.tour)}</p>
+      <p>Total: <b class="monto">${pesos(f.total)}</b> · Pagado: <b class="monto">${pesos(f.pagado)}</b> · Saldo: <b class="monto">${pesos(f.saldo)}</b></p>
+      <div class="barra-progreso" style="height:14px"><span style="width:${pct}%"></span></div>
+      <p class="ayuda">${pct}% pagado · ${f.pagos.length} abono(s)</p>`;
+  }
+
+  async function registrarPago() {
+    const facturaId = Number($('p-factura').value);
+    if (!facturaId) { hablar('Primero elige una factura ☝️', false); efectoError(); return; }
+    const cuerpo = { facturaId, monto: Number($('p-monto').value), metodo: $('p-metodo').value };
+    if ($('p-ref').value.trim()) cuerpo.referencia = $('p-ref').value.trim();
+    const r = await api('POST', '/pagos', cuerpo);
+    const texto = r.ok && r.datos.estadoFactura === 'pagada'
+      ? `¡${r.datos.factura.numero} quedó PAGADA por completo! 🎉`
+      : `Abono registrado. Saldo pendiente: ${pesos(r.datos && r.datos.saldoPendiente)} 💰`;
+    reaccionarGenerico('POST', r, texto);
+    if (r.ok) {
+      destello(COLORES.POST);
+      $('p-ref').value = '';
+      await cargarPagos();
+      chispas(reiniciarYDevolver($('pago-' + r.datos.id), 'nuevo'));
+    }
+  }
+
+  async function borrarPago(id) {
+    const f = $('pago-' + id);
+    const r = await api('DELETE', `/pagos/${id}`);
+    reaccionarGenerico('DELETE', r, r.datos && r.datos.mensaje);
+    if (r.ok) { if (f) { f.classList.add('borrar'); await esperar(900); } destello(COLORES.DELETE); await cargarPagos(); }
+  }
+
+  // ═══════════════ USUARIOS ═══════════════
+  async function cargarUsuarios() {
+    const res = await apiFetch('/users');
+    if (!res.ok) return;
+    const usuarios = await res.json();
+    $('tabla-usuarios').innerHTML = usuarios.map((u) => `<tr id="usuario-${Number(u.id)}">
+        <td>${esc(u.id)}</td>
+        <td>${esc(u.nombre)}</td>
+        <td>${esc(u.correo)}</td>
+        <td><span class="rol rol-${esc(u.rol)}">${esc(u.rol)}</span></td>
+        <td>${u.activo ? '✅' : '⛔'}</td>
+        <td class="acciones">
+          ${u.id !== sesion.usuario.id ? `<button title="${u.activo ? 'Desactivar' : 'Activar'}" onclick="activarUsuario(${Number(u.id)}, ${!u.activo})">${u.activo ? '⏸️' : '▶️'}</button>
+          <button title="Borrar" onclick="borrarUsuario(${Number(u.id)})">🗑️</button>` : '<small class="vacio">(tú)</small>'}
+        </td></tr>`).join('');
+  }
+
+  async function crearUsuario() {
+    const cuerpo = { nombre: $('u-nombre').value.trim(), correo: $('u-correo').value.trim(), clave: $('u-clave').value, rol: $('u-rol').value };
+    const r = await api('POST', '/users', cuerpo);
+    reaccionarGenerico('POST', r, `Usuario ${r.datos && r.datos.nombre} creado con rol ${r.datos && r.datos.rol} 👤`);
+    if (r.ok) {
+      ['u-nombre', 'u-correo', 'u-clave'].forEach((c) => ($(c).value = ''));
+      destello(COLORES.POST);
+      await cargarUsuarios();
+      chispas(reiniciarYDevolver($('usuario-' + r.datos.id), 'nuevo'));
+    }
+  }
+
+  async function activarUsuario(id, activo) {
+    const r = await api('PATCH', `/users/${id}`, { activo });
+    reaccionarGenerico('PATCH', r, `${r.datos && r.datos.nombre} ahora está ${activo ? 'activo ✅' : 'inactivo ⛔ (no podrá iniciar sesión)'}`);
+    if (r.ok) { await cargarUsuarios(); reiniciarYDevolver($('usuario-' + id), 'voltear'); }
+  }
+
+  async function borrarUsuario(id) {
+    const f = $('usuario-' + id);
+    const r = await api('DELETE', `/users/${id}`);
+    reaccionarGenerico('DELETE', r, r.datos && r.datos.mensaje);
+    if (r.ok) { if (f) { f.classList.add('borrar'); await esperar(900); } await cargarUsuarios(); }
+  }
+
+  // ═══════════════ REGISTRO DE VISITANTES ═══════════════
+  function mostrarRegistro(ver) {
+    $('form-login').hidden = ver;
+    $('form-registro').hidden = !ver;
+    $('r-error').textContent = '';
+    $('l-error').textContent = '';
+    setTimeout(() => $(ver ? 'r-nombre' : 'l-correo').focus(), 50);
+  }
+
+  async function registrarse(e) {
+    e.preventDefault();
+    $('r-error').textContent = '';
+    if ($('r-clave').value !== $('r-clave2').value) {
+      $('r-error').textContent = 'Las claves no coinciden';
+      reiniciarClase($('form-registro'), 'temblor');
+      return;
+    }
+    try {
+      const res = await fetch('/auth/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: $('r-nombre').value.trim(), correo: $('r-correo').value.trim(), clave: $('r-clave').value }),
+      });
+      const datos = await res.json();
+      if (!res.ok) {
+        $('r-error').textContent = Array.isArray(datos.message) ? datos.message.join(' · ') : datos.message;
+        reiniciarClase($('form-registro'), 'temblor');
+        return;
+      }
+      guardarSesion({ token: datos.access_token, usuario: datos.usuario });
+      ['r-nombre', 'r-correo', 'r-clave', 'r-clave2'].forEach((c) => ($(c).value = ''));
+      mostrarRegistro(false);
+      mostrarApp();
+      hablar(`¡Bienvenido/a, ${datos.usuario.nombre}! Ya puedes solicitar tu reserva 🌵`, true);
+    } catch (err) {
+      $('r-error').textContent = 'No hay conexión con el servidor. ¿Está corriendo npm run start:dev?';
+    }
+  }
+
+  // ═══════════════ MIS RESERVAS (cliente) ═══════════════
+  const TARIFAS = { 'Astronómico': 80000, 'Senderismo Cuzco': 50000, 'Los Hoyos': 45000, 'Fotografía nocturna': 90000 };
+  let misFacturas = [];
+
+  function estimar() {
+    const tarifa = TARIFAS[$('c-tour').value] || 0;
+    const personas = Math.max(0, Number($('c-personas').value) || 0);
+    const subtotal = tarifa * personas;
+    const iva = Math.round(subtotal * 0.19);
+    $('c-estimado').textContent = pesos(subtotal + iva);
+    $('c-desglose').textContent = `${personas} × ${pesos(tarifa)} = ${pesos(subtotal)} + IVA ${pesos(iva)}`;
+  }
+
+  async function cargarMias() {
+    if (!$('c-fecha').value) {
+      const manana = new Date(Date.now() + 86400000);
+      $('c-fecha').value = manana.toISOString().slice(0, 10);
+    }
+    $('c-fecha').min = new Date().toISOString().slice(0, 10);
+    estimar();
+    const [rR, rF] = await Promise.all([apiFetch('/reservas'), apiFetch('/facturas/mias')]);
+    if (!rR.ok) return;
+    const reservas = await rR.json();
+    misFacturas = rF.ok ? await rF.json() : [];
+    const facturaDe = (id) => misFacturas.find((f) => f.reserva && f.reserva.id === id);
+    $('tabla-mias').innerHTML = reservas.length
+      ? reservas.map((r) => {
+          const f = facturaDe(r.id);
+          const id = Number(r.id);
+          return `<tr id="mia-${id}">
+            <td>${esc(r.id)}</td>
+            <td>${esc(r.tour)}</td>
+            <td>${esc(r.fecha)}</td>
+            <td>${esc(r.personas)}</td>
+            <td><span class="estado ${esc(r.estado)}">${esc(r.estado)}</span></td>
+            <td>${f ? `<b class="monto">${esc(f.numero)}</b> <span class="estado ${esc(f.estado)}">${esc(f.estado)}</span>` : '<span class="vacio">—</span>'}</td>
+            <td class="monto">${f ? pesos(f.saldo) : ''}</td>
+            <td class="acciones">
+              <button title="Descargar comprobante" onclick="descargarComprobante(${id})">🎟️</button>
+              ${f ? `<button title="Descargar factura" onclick="dibujarFactura(misFacturas.find((x) => x.id === ${Number(f.id)}))">⬇️</button>` : ''}
+              ${r.estado === 'pendiente' ? `<button title="Cancelar reserva" onclick="cancelarMia(${id})">❌</button>` : ''}
+            </td></tr>`;
+        }).join('')
+      : '<tr><td colspan="8" class="vacio">Aún no tienes reservas. ¡Solicita la primera! 🌌</td></tr>';
+  }
+
+  async function solicitarReserva() {
+    const cuerpo = {
+      visitante: sesion.usuario.nombre,
+      tour: $('c-tour').value,
+      fecha: $('c-fecha').value,
+      personas: Number($('c-personas').value),
+    };
+    const r = await api('POST', '/reservas', cuerpo);
+    reaccionarGenerico('POST', r, `¡Reserva #${r.datos && r.datos.id} solicitada! Queda pendiente hasta que la confirmemos ✨`);
+    if (r.ok) {
+      destello(COLORES.POST);
+      await cargarMias();
+      chispas(reiniciarYDevolver($('mia-' + r.datos.id), 'nuevo'));
+    }
+  }
+
+  async function cancelarMia(id) {
+    const r = await api('PATCH', `/reservas/${id}/cancelar`);
+    reaccionarGenerico('PATCH', r, `Reserva #${id} cancelada ❌`);
+    if (r.ok) { destello(COLORES.DELETE); await cargarMias(); reiniciarYDevolver($('mia-' + id), 'voltear'); }
+  }
+
+  // ═══════════════ MONITOR EN VIVO ═══════════════
+  let timerMonitor = null;
+  let monitorPausado = false;
+  const anteriores = { usuarios: null, reservas: null, facturas: null, pagos: null };
+
+  function iniciarMonitor() {
+    detenerMonitor();
+    monitorPausado = false;
+    $('m-punto').classList.remove('pausa');
+    $('m-pausa').textContent = '⏸️ Pausar';
+    cargarMonitor();
+    timerMonitor = setInterval(cargarMonitor, Number($('m-cada').value));
+  }
+
+  function detenerMonitor() {
+    if (timerMonitor) clearInterval(timerMonitor);
+    timerMonitor = null;
+  }
+
+  function pausarMonitor() {
+    if (monitorPausado) { iniciarMonitor(); hablar('Monitor en vivo otra vez 🔴', true); return; }
+    detenerMonitor();
+    monitorPausado = true;
+    $('m-punto').classList.add('pausa');
+    $('m-pausa').textContent = '▶️ Reanudar';
+    hablar('Monitor en pausa ⏸️', true);
+  }
+
+  // Pinta una tabla y marca las filas nuevas o cambiadas desde la última consulta
+  function pintarVivo(nombre, filas, columnas) {
+    const previo = anteriores[nombre];
+    const actual = {};
+    filas.forEach((f) => { actual[f.id] = JSON.stringify(columnas.map((c) => c(f))); });
+    $('m-n-' + nombre).textContent = filas.length;
+    $('m-' + nombre).innerHTML = filas.length
+      ? filas.map((f) => {
+          const cambio = previo !== null && previo[f.id] !== actual[f.id];
+          return `<tr class="${cambio ? 'cambio-vivo' : ''}">${columnas.map((c) => `<td>${c(f)}</td>`).join('')}</tr>`;
+        }).join('')
+      : `<tr><td colspan="${columnas.length}" class="vacio">(vacía)</td></tr>`;
+    anteriores[nombre] = actual;
+  }
+
+  async function cargarMonitor() {
+    if (!sesion) return;
+    try {
+      const [rU, rR, rF, rP] = await Promise.all(['/users', '/reservas', '/facturas', '/pagos'].map((u) => apiFetch(u)));
+      if (![rU, rR, rF, rP].every((r) => r.ok)) return;
+      const [usuarios, reservas, facturas, pagos] = await Promise.all([rU.json(), rR.json(), rF.json(), rP.json()]);
+      const badge = (clase, texto) => `<span class="${clase}">${esc(texto)}</span>`;
+      pintarVivo('usuarios', usuarios, [
+        (u) => esc(u.id), (u) => esc(u.nombre), (u) => esc(u.correo),
+        (u) => badge(`rol rol-${esc(u.rol)}`, u.rol), (u) => (u.activo ? '✅' : '⛔'),
+      ]);
+      pintarVivo('reservas', reservas, [
+        (r) => esc(r.id), (r) => esc(r.visitante), (r) => esc(r.tour), (r) => esc(r.personas),
+        (r) => badge(`estado ${esc(r.estado)}`, r.estado), (r) => (r.cliente ? esc(r.cliente.id) : '<span class="vacio">null</span>'),
+      ]);
+      pintarVivo('facturas', facturas, [
+        (f) => `<b class="monto">${esc(f.numero)}</b>`, (f) => esc(f.reserva && f.reserva.id),
+        (f) => `<span class="monto">${pesos(f.total)}</span>`, (f) => `<span class="monto">${pesos(f.saldo)}</span>`,
+        (f) => badge(`estado ${esc(f.estado)}`, f.estado), (f) => esc(f.emitidaPor && f.emitidaPor.id),
+      ]);
+      pintarVivo('pagos', pagos, [
+        (p) => esc(p.id), (p) => esc(p.factura && p.factura.id), (p) => `<span class="monto">${pesos(p.monto)}</span>`,
+        (p) => esc(p.metodo), (p) => esc(p.registradoPor && p.registradoPor.id),
+      ]);
+      $('m-hora').textContent = new Date().toLocaleTimeString('es-CO');
+    } catch (e) { /* servidor apagado: se reintenta en el siguiente ciclo */ }
+  }
+
+  // ═══════════════ ARRANQUE ═══════════════
+  sesion = leerSesion();
+  if (sesion) {
+    $('bienvenida').classList.add('oculta');
+    mostrarApp();
+  }
+</script>
+</body>
+</html>

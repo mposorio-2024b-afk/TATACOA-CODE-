@@ -1,0 +1,107 @@
+### ═══════════════════════════════════════════════
+###  PRUEBAS DEL MÓDULO USERS · Tatacoa Code
+###  NestJS + TypeORM + PostgreSQL (Docker)
+###  Haz clic en "Send Request" encima de cada petición
+### ═══════════════════════════════════════════════
+
+@base = http://localhost:3000/users
+
+
+### 1. POST → crear un usuario (esperado: 201 Created)
+POST {{base}}
+Content-Type: application/json
+
+{
+  "nombre": "Maria Paula",
+  "correo": "mposrio-2024b@corhuila.edu.com",
+  "edad": 50
+}
+
+
+### 2. POST → crear otro usuario (esperado: 201 Created)
+POST {{base}}
+Content-Type: application/json
+
+{
+  "nombre": "Erick Puentes",
+  "correo": "jepuees-2024b@corhuila.edu.co.com",
+  "edad": 24
+}
+
+
+### 3. GET → ver todos los usuarios (esperado: 200 OK)
+GET {{base}}
+
+
+### 4. GET → ver un usuario por id (esperado: 200 OK)
+GET {{base}}/1
+
+
+### 5. GET → usuario que no existe (esperado: 404 Not Found)
+GET {{base}}/99
+
+
+### 6. PATCH → cambiar solo la edad y activo (esperado: 200 OK)
+PATCH {{base}}/1
+Content-Type: application/json
+
+{
+  "edad": 23,
+  "activo": false
+}
+
+
+### 7. DELETE → borrar el usuario 2 (esperado: 200 OK)
+DELETE {{base}}/2
+
+
+### ───────── VALIDACIONES DEL DTO ─────────
+
+### 8. POST con datos inválidos (esperado: 400 Bad Request)
+POST {{base}}
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "correo": "malo",
+  "edad": 0
+}
+
+
+### 9. POST con la edad como texto (esperado: 400 Bad Request)
+POST {{base}}
+Content-Type: application/json
+
+{
+  "nombre": "Ana",
+  "correo": "ana@correo.com",
+  "edad": "veinte"
+}
+
+
+### 10. POST con un campo que no está en el DTO (esperado: 400 "property rol should not exist")
+POST {{base}}
+Content-Type: application/json
+
+{
+  "nombre": "Ana",
+  "correo": "ana@correo.com",
+  "edad": 20,
+  "rol": "admin"
+}
+
+
+### 11. POST con un correo repetido (esperado: 409 Conflict)
+POST {{base}}
+Content-Type: application/json
+
+{
+  "nombre": "Otra persona",
+  "correo": "mp@correo.com",
+  "edad": 40
+}
+### 12. Limpiar: borrar el usuario inválido
+DELETE {{base}}/3
+
+### 13. Limpiar: borrar a Ana (entró con el campo rol)
+DELETE {{base}}/4
