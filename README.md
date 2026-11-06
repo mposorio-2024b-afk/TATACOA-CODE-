@@ -5,6 +5,8 @@ Sistema de reservas, facturación y pagos para los tours del **Observatorio del 
 Backend en **NestJS** con **TypeORM** y **PostgreSQL** (en Docker), autenticación con **JWT**, contraseñas cifradas con **bcrypt** y acceso por **roles**. Incluye un panel web propio para usar todo desde el navegador.
 
 > Proyecto académico · Programación Avanzada · Ingeniería Mecatrónica · CORHUILA
+>
+> **Realizado por:** Maria Paula Osorio · Johan Cárdenas · Erick Puentes
 
 ---
 
@@ -142,3 +144,13 @@ src/
 public/
 └── index.html   # panel web
 ```
+
+---
+
+## 👩‍💻 Autores
+
+- **Maria Paula Osorio**
+- **Johan Cárdenas**
+- **Erick Puentes**
+
+Ingeniería Mecatrónica · Corporación Universitaria del Huila (CORHUILA) · Neiva, 2026
