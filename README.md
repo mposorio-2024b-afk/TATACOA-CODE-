@@ -59,8 +59,8 @@ usuarios ──1:N──► pagos      (registradoPorId: quién lo registró)
 
 ### 1. Clonar e instalar dependencias
 ```bash
-git clone https://github.com/TU-USUARIO/tatacoa-code.git
-cd tatacoa-code
+git clone https://github.com/mposorio-2024b-afk/TATACOA-CODE-.git
+cd TATACOA-CODE-
 npm install
 ```
 
